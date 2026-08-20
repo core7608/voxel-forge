@@ -127,9 +127,10 @@ docs/ tools/ .github/
 
 ## 🚀 CI / GitHub
 
-- `.github/workflows/ci.yml`: على كل Push/PR → استيراد + **smoke test headless** (صورة `godot-ci/godot:4.4`).
-- الريبو نظيف من `.godot/` (`.gitignore`).
-- التوزيع لاحقاً: GitHub Releases بملفات Export (Windows/Mac/Linux).
+- `.github/workflows/ci.yml`: على كل Push/PR → استيراد + **smoke test headless** (صورة `barichello/godot-ci:4.4.1`).
+- على كل Push على main أو وسم `v*` → **بناء لكل الأنظمة** (Windows / Linux / macOS / Web / Android debug) حسب `export_presets.cfg`، والمخرجات تُرفع كـ Artifacts.
+- عند إنشاء **Release** تُرفع كل النسخ تلقائياً كأصول مضغوطة (zip).
+- الريبو نظيف من `.godot/` و `build/` (`.gitignore`).
 
 ## 🗺️ خارطة الطريق (Backlog من البرومبت)
 
