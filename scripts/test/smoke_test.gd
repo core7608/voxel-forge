@@ -163,6 +163,9 @@ func _ready() -> void:
 	# --- Procedural structures (Section 2) ---
 	_structure_tests(gx, gz, gy)
 
+	# --- City system (Section 3.2) ---
+	_city_tests(gx, gz, gy)
+
 	print("")
 	print("=====================================")
 	print("SMOKE TEST: %d passed, %d failed" % [_passes, _fails])
@@ -319,6 +322,72 @@ func _structure_tests(gx: int, gz: int, gy: int) -> void:
 	World.set_block(sp, 0)
 	World.set_block(sp + Vector3i(1, 0, 0), 0)
 	s.queue_free()
+
+## City system tests (Section 3.2): identity, governments, roles, capture.
+func _city_tests(gx: int, gz: int, gy: int) -> void:
+	var center := Vector3(gx + 0.5, gy + 1.0, gz + 0.5)
+	# identity
+	var idx: int = CityManager.declare_city("Alice", "Alicetown", center)
+	var city: City = CityManager.get_city(idx)
+	_check("city: declared with name+founder", city != null and city.name == "Alicetown" and city.founder == "Alice")
+	_check("city: founder is an engineer", city.role_of("Alice") == "engineer")
+	CityManager.set_flag(idx, [Color(0.8, 0.2, 0.2), Color(0.9, 0.9, 0.9)], "star")
+	_check("city: flag set", city.flag_colors.size() == 2 and city.flag_symbol == "star")
+	CityManager.set_theme(idx, "military")
+	_check("city: theme set", city.theme == "military")
+
+	# government: monarchy (founder decides alone)
+	CityManager.set_government(idx, "monarchy")
+	var vid: int = CityManager.propose(idx, "set_tax 0.2")
+	_check("city: monarchy proposal made", vid > 0)
+	var resolved: bool = CityManager.vote(vid, "Alice", true)
+	_check("city: monarchy founder vote decides", resolved and city.tax_rate == 0.2)
+
+	# government: council (majority of council)
+	CityManager.set_government(idx, "council")
+	CityManager.set_council(idx, ["Alice", "Bob", "Carol"])
+	var vid2: int = CityManager.propose(idx, "set_height 30")
+	CityManager.vote(vid2, "Alice", true)
+	CityManager.vote(vid2, "Bob", false)
+	var res2: bool = CityManager.vote(vid2, "Carol", true)  # 2 yes vs 1 no -> passes
+	_check("city: council majority passes", res2 and city.max_building_height == 30)
+
+	# government: democracy (majority of residents)
+	CityManager.set_government(idx, "democracy")
+	CityManager.add_resident(idx, "Bob")
+	CityManager.add_resident(idx, "Carol")
+	CityManager.add_resident(idx, "Dave")
+	var vid3: int = CityManager.propose(idx, "close")
+	CityManager.vote(vid3, "Alice", true)
+	CityManager.vote(vid3, "Bob", false)
+	var res3: bool = CityManager.vote(vid3, "Carol", false)  # 1 yes vs 2 no -> fails
+	_check("city: democracy majority rejects", res3 == false and city.open_city == true)
+
+	# roles
+	CityManager.assign_role(idx, "Dave", "guard")
+	_check("city: role assigned", city.role_of("Dave") == "guard")
+
+	# castle capture: build a fake castle structure (in-bounds) + capture as a guard
+	var sidx := World.new_structure_index()
+	var bx := gx - 8
+	var bz := gz - 8
+	for dx in range(8):
+		for dz in range(8):
+			for dy in range(3):
+				World.register_structure_block(Vector3i(bx + dx, gy + 1 + dy, bz + dz), Blocks.by_name("brick"), sidx)
+	var bounds := AABB(Vector3(bx, gy + 1, bz), Vector3(8, 3, 8))
+	var guard_pos := Vector3(bx + 4.0, gy + 2.0, bz + 4.0)
+	var captured: bool = CityManager.try_capture(idx, "Dave", guard_pos, bounds)
+	_check("city: guard captures castle", captured and city.castle_index == sidx)
+	# a non-guard cannot capture
+	var captured2: bool = CityManager.try_capture(idx, "Bob", guard_pos, bounds)
+	_check("city: citizen cannot capture", captured2 == false)
+
+	# cleanup the fake castle
+	for dx in range(8):
+		for dz in range(8):
+			for dy in range(3):
+				World.set_block(Vector3i(bx + dx, gy + 1 + dy, bz + dz), 0)
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():

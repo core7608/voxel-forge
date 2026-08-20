@@ -18,6 +18,7 @@ const _BOOTSTRAP := [
 	preload("res://scripts/resources/craft_recipe.gd"),
 	preload("res://scripts/resources/design_blueprint.gd"),
 	preload("res://scripts/resources/mod_manifest.gd"),
+	preload("res://scripts/resources/city.gd"),
 	preload("res://scripts/voxel/chunk.gd"),
 	preload("res://scripts/voxel/chunk_mesher.gd"),
 	preload("res://scripts/voxel/terrain_generator.gd"),
