@@ -26,6 +26,11 @@ const MAX_CLIENTS := 8
 
 var is_host := false
 var is_client := false
+## True while applying a host/remote authoritative edit (sync or broadcast).
+## Game uses this to avoid mis-attributing remote builds to the local player.
+var applying_remote := false
+## Peer id whose request is currently being applied by the host (0 = none).
+var remote_actor_id := 0
 
 func is_offline() -> bool:
 	return not is_host and not is_client
@@ -43,7 +48,11 @@ func host_game() -> bool:
 	if is_host:
 		return true
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(PORT, MAX_CLIENTS)
+	# Owner-tunable cap (ServerConfig online.max_players), defaults to MAX_CLIENTS.
+	var cap := MAX_CLIENTS
+	if ServerConfig != null:
+		cap = ServerConfig.max_players()
+	var err := peer.create_server(PORT, cap)
 	if err != OK:
 		push_error("Net: cannot host on port %d: %s" % [PORT, error_string(err)])
 		return false
@@ -135,12 +144,17 @@ func broadcast_block_change(pos: Vector3i, mat: int) -> void:
 func request_block_change(pos: Vector3i, mat: int) -> void:
 	if not is_host:
 		return
+	# Attribute this edit to the requesting peer (land claim / maturity).
+	remote_actor_id = multiplayer.get_remote_sender_id()
 	if World.set_block(pos, mat):
 		broadcast_block_change(pos, mat)
+	remote_actor_id = 0
 
 @rpc("any_peer", "call_remote", "reliable")
 func apply_block_change(pos: Vector3i, mat: int) -> void:
+	applying_remote = true
 	World.set_block(pos, mat)  # clients recompute structural state locally
+	applying_remote = false
 
 # --- furniture ----------------------------------------------------------------
 

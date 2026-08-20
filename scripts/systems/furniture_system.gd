@@ -156,7 +156,7 @@ func _placement_point() -> Vector3:
 		return Vector3.INF
 	var cam := pl.get_node("Camera3D") as Camera3D
 	var from := cam.global_position
-	var dir := -cam.global_transform.basis.z
+	var dir: Vector3 = -cam.global_transform.basis.z
 	var br := VoxelRay.cast(World, from, dir, 8.0)
 	if br.hit != null:
 		var n: Vector3i = br["normal"]
@@ -170,7 +170,7 @@ func _placement_point() -> Vector3:
 			return Vector3(br.hit.x + 0.5, br.hit.y + 0.5, br.hit.z + (1 if n.z > 0 else 0))
 	# no block hit: project ray onto y=1 plane
 	if dir.y < -0.001:
-		var t := (1.0 - from.y) / dir.y
+		var t: float = (1.0 - from.y) / dir.y
 		if t > 0.0 and t < 30.0:
 			return from + dir * t
 	return Vector3.INF
@@ -271,7 +271,7 @@ func _measure_point() -> Vector3:
 		return Vector3.INF
 	var cam := pl.get_node("Camera3D") as Camera3D
 	var from := cam.global_position
-	var dir := -cam.global_transform.basis.z
+	var dir: Vector3 = -cam.global_transform.basis.z
 	# furniture hit first
 	var q := PhysicsRayQueryParameters3D.create(from, from + dir * 10.0, 4)
 	var fh = get_viewport().get_world_3d().direct_space_state.intersect_ray(q)
@@ -281,7 +281,7 @@ func _measure_point() -> Vector3:
 	if br.hit != null:
 		return from + dir * float(br["t"])
 	if dir.y < -0.001:
-		var t := (1.0 - from.y) / dir.y
+		var t: float = (1.0 - from.y) / dir.y
 		if t > 0.0 and t < 30.0:
 			return from + dir * t
 	return Vector3.INF
@@ -292,7 +292,7 @@ func _ray_furniture() -> Variant:
 		return null
 	var cam := pl.get_node("Camera3D") as Camera3D
 	var from := cam.global_position
-	var dir := -cam.global_transform.basis.z
+	var dir: Vector3 = -cam.global_transform.basis.z
 	var q := PhysicsRayQueryParameters3D.create(from, from + dir * 10.0, 4)
 	var hit = get_viewport().get_world_3d().direct_space_state.intersect_ray(q)
 	if hit.is_empty():

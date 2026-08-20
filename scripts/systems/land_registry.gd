@@ -83,3 +83,23 @@ func place_emblem(by_player: String, pos: Vector3, emblem: String) -> void:
 	var owner := owner_at(pos)
 	if owner != "" and owner != by_player:
 		notify_owner(owner, "%s placed a %s on your land" % [by_player, emblem])
+
+# --- persistence -----------------------------------------------------------------
+
+func get_data() -> Dictionary:
+	var players_out: Dictionary = {}
+	for p in players:
+		var regions_out: Array = []
+		for r in players[p]["regions"]:
+			regions_out.append([r.x, r.y])
+		players_out[p] = {"last_seen": players[p]["last_seen"], "regions": regions_out}
+	return {"players": players_out}
+
+func load_data(data: Dictionary) -> void:
+	players.clear()
+	var p_in: Dictionary = data.get("players", {})
+	for p in p_in:
+		var regions: Dictionary = {}
+		for r in p_in[p].get("regions", []):
+			regions[Vector2i(int(r[0]), int(r[1]))] = true
+		players[p] = {"last_seen": float(p_in[p].get("last_seen", 0.0)), "regions": regions}

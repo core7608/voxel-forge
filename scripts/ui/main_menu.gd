@@ -161,7 +161,6 @@ func _build() -> void:
 	_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
 	_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	_file_dialog.size = Vector2i(720, 480)
-	var fl := AcceptDialog.new()
 	_file_dialog.add_filter("*.png ; PNG images")
 	_file_dialog.file_selected.connect(_on_skin_imported)
 	add_child(_file_dialog)

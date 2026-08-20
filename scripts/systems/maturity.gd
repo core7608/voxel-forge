@@ -41,3 +41,19 @@ func summary() -> String:
 	var days := oldest_build_age() / 86400.0
 	return "Settled %.1f days ago · %d settlers · %d governments" % [
 		days, permanent_settlers(), governments_formed]
+
+# --- persistence -----------------------------------------------------------------
+
+func get_data() -> Dictionary:
+	return {
+		"first_build_time": first_build_time,
+		"settlers": settlers.duplicate(),
+		"governments_formed": governments_formed,
+	}
+
+func load_data(data: Dictionary) -> void:
+	first_build_time = float(data.get("first_build_time", -1.0))
+	settlers.clear()
+	for s in data.get("settlers", {}):
+		settlers[s] = float(data["settlers"][s])
+	governments_formed = int(data.get("governments_formed", 0))

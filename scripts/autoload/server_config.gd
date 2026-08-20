@@ -59,10 +59,12 @@ func _ready() -> void:
 	# Start from balanced defaults (deep copy), then overlay any file.
 	config = _deep_copy(DEFAULT_CONFIG)
 	# Dedicated servers may pass --config <path>.
+	# NOTE: get_cmdline_args() returns PackedStringArray — convert with Array()
+	# before assigning to a typed Array (no implicit packed->Array conversion).
 	var args := OS.get_cmdline_args()
 	var vals := OS.get_cmdline_user_args()
-	var all: Array = args.duplicate()
-	all.append_array(vals)
+	var all: Array = Array(args)
+	all.append_array(Array(vals))
 	for i in range(all.size() - 1):
 		if str(all[i]) == "--config":
 			config_path = str(all[i + 1])
