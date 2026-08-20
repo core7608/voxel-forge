@@ -14,7 +14,6 @@ func _ready() -> void:
 	for i in 4:
 		var p3 := AudioStreamPlayer3D.new()
 		p3.max_distance = 25.0
-		p3.attenuation = 1.0
 		add_child(p3)
 		_players3d.append(p3)
 	_streams = {

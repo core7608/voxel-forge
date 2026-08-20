@@ -1,5 +1,6 @@
+class_name VoxelWorld
 extends Node3D
-## World — chunk-based voxel world (autoload).
+## World — chunk-based voxel world (autoload; type name VoxelWorld).
 ##
 ## Fixed-size prototype island: 6x6 chunks of 16x32x16 (96x96 columns).
 ## Terrain is deterministic from the seed; only player edits ("placed" /
@@ -25,7 +26,20 @@ var test_small := false          # smoke-test flag: 2x2 chunks
 var WX: int = CHUNKS_X * CH
 var WZ: int = CHUNKS_Z * CH
 
+## Procedural structures (Section 2): blocks that are pre-supported (static)
+## until the player modifies them, then become subject to structural physics.
+var structure_id: Dictionary = {}     # Vector3i -> structure index
+var structure_static: Dictionary = {} # structure index -> bool (still static)
+var _next_struct := 0
+
+signal structure_activated(index: int)
+
 var _rebuild_queue: Array = []
+
+const _S_DIRS: Array = [
+	Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 1, 0),
+	Vector3i(0, -1, 0), Vector3i(0, 0, 1), Vector3i(0, 0, -1),
+]
 
 func _ready() -> void:
 	# Nothing to do until Main (or a test) calls generate().
@@ -56,6 +70,7 @@ func generate(new_seed: int) -> void:
 	broken.clear()
 	_rebuild_queue.clear()
 
+	_reset_structures()
 	var nx := 2 if test_small else CHUNKS_X
 	var nz := 2 if test_small else CHUNKS_Z
 	for cx in nx:
@@ -65,6 +80,7 @@ func generate(new_seed: int) -> void:
 			add_child(c)
 			chunks[Vector2i(cx, cz)] = c
 	TerrainGenerator.fill(self, seed)
+	StructureGenerator.generate(self, seed)
 	generated = true
 	# Build all meshes now (initial view); later edits rebuild incrementally.
 	for c in chunks.values():
@@ -158,11 +174,73 @@ func set_block(p: Vector3i, mat: int) -> bool:
 		elif old != 0 and old_is_terrain:
 			broken.append([p.x, p.y, p.z, old])
 	emit_signal("block_changed", p, mat)
+	# Modifying a (neighbour of a) procedural structure wakes it from its
+	# pre-supported state so structural physics now apply to it (Section 2).
+	_maybe_activate_structure(p)
 	return true
 
 func _set_cell_raw(x: int, y: int, z: int, mat: int) -> void:
 	var c: VoxelChunk = chunks[_key(x, z)]
 	c.set_local(x - c.cx * CH, y, z - c.cz * CH, mat)
+
+# --- procedural structures (Section 2) -------------------------------------
+
+func _reset_structures() -> void:
+	structure_id.clear()
+	structure_static.clear()
+	_next_struct = 0
+
+func new_structure_index() -> int:
+	_next_struct += 1
+	return _next_struct
+
+## Place a pre-supported (static) structure block. Air (mat=0) carves the cell
+## and is tracked for activation but NOT added to `placed` (which holds solid
+## player/structure blocks only).
+func register_structure_block(p: Vector3i, mat: int, sidx: int) -> void:
+	if p.x < 0 or p.z < 0 or p.x >= WX or p.z >= WZ or p.y < 0 or p.y >= H:
+		return
+	var c: VoxelChunk = chunks.get(_key(p.x, p.z), null)
+	if c == null:
+		return
+	c.set_local(p.x - c.cx * CH, p.y, p.z - c.cz * CH, mat)
+	if mat == 0:
+		placed.erase(p)  # carve: drop any solid placement at this cell
+	else:
+		placed[p] = mat
+	structure_id[p] = sidx
+	structure_static[sidx] = true
+	_mark_dirty(c)
+	if (p.x % CH) == 0:
+		_mark_neighbor(c, -1, 0)
+	elif (p.x % CH) == CH - 1:
+		_mark_neighbor(c, 1, 0)
+	if (p.z % CH) == 0:
+		_mark_neighbor(c, 0, -1)
+	elif (p.z % CH) == CH - 1:
+		_mark_neighbor(c, 0, 1)
+
+## True if this block belongs to a still-static (pre-supported) structure.
+func is_static_structure(p: Vector3i) -> bool:
+	if structure_id.has(p) and placed.has(p):
+		return bool(structure_static.get(structure_id[p], false))
+	return false
+
+## Wake the whole structure containing/neighbouring p (make it dynamic).
+func _maybe_activate_structure(p: Vector3i) -> void:
+	var sidxs: Array = []
+	var candidates: Array = [p]
+	for d in _S_DIRS:
+		candidates.append(p + d)
+	for q in candidates:
+		if structure_id.has(q):
+			var s = structure_id[q]
+			if not sidxs.has(s):
+				sidxs.append(s)
+	for s in sidxs:
+		if bool(structure_static.get(s, false)):
+			structure_static[s] = false
+			emit_signal("structure_activated", s)
 
 func _mark_dirty(c: VoxelChunk) -> void:
 	if not _rebuild_queue.has(c):

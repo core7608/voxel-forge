@@ -201,8 +201,13 @@ func _solve(blocks: Dictionary) -> Dictionary:
 	var par: Dictionary = {}
 	var q: Array = []
 
-	# Seed: blocks sitting on ground (d=0) — sand penalizes +1 (softer soil).
+	# Seed: blocks sitting on ground (d=0) — sand penalizes +1 (softer soil) —
+	# plus still-static procedural structure blocks (pre-supported, Section 2).
 	for p in blocks:
+		if World.is_static_structure(p):
+			d[p] = 0
+			q.append(p)
+			continue
 		var below: Vector3i = p - Vector3i.UP
 		if World.is_ground_at(below):
 			d[p] = 1 if World.is_sand_at(below) else 0
@@ -257,6 +262,9 @@ func _solve(blocks: Dictionary) -> Dictionary:
 
 	var new_state: Dictionary = {}
 	for p in blocks:
+		if World.is_static_structure(p):
+			new_state[p] = OK  # pre-supported until the player modifies it
+			continue
 		var m: BlockMaterial = Blocks.mat(blocks[p])
 		if m == null:
 			new_state[p] = UNSTABLE
@@ -374,7 +382,7 @@ func _sync_visuals() -> void:
 func _collapse() -> void:
 	var doomed: Array = []
 	for p in unstable_since:
-		if state.get(p, OK) == UNSTABLE:
+		if state.get(p, OK) == UNSTABLE and not World.is_static_structure(p):
 			doomed.append(p)
 	if doomed.is_empty():
 		return

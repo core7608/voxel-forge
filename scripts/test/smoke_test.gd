@@ -160,6 +160,9 @@ func _ready() -> void:
 	_check("asset: sword model exists", ResourceLoader.exists(Blocks.weapon_model(Blocks.SWORD)))
 	_check("asset: every furniture item has a real model", _all_furniture_have_models())
 
+	# --- Procedural structures (Section 2) ---
+	_structure_tests(gx, gz, gy)
+
 	print("")
 	print("=====================================")
 	print("SMOKE TEST: %d passed, %d failed" % [_passes, _fails])
@@ -279,6 +282,43 @@ func _ai_tests(gx: int, gz: int, gy: int) -> void:
 	_check("ai: ignores distant player", mon._sensing_strength() <= 0.0)
 	fake_player.queue_free()
 	mon.queue_free()
+
+## Procedural structure tests (Section 2). Runs last (regenerates the world).
+func _structure_tests(gx: int, gz: int, gy: int) -> void:
+	# 1) force dungeons to appear, regenerate, verify they exist & are static
+	var structs: Dictionary = ServerConfig.get_value("worldgen", "structures", {})
+	var old_dungeon: float = float(structs.get("dungeon", 0.03))
+	structs["dungeon"] = 1.0
+	ServerConfig.set_value("worldgen", "structures", structs)
+	World.generate(1234)
+	_check("structure: landmarks generate", World.structure_id.size() > 0)
+	if World.structure_id.size() > 0:
+		var first_p: Vector3i = World.structure_id.keys()[0]
+		_check("structure: generated block is pre-supported (static)", World.is_static_structure(first_p))
+	structs["dungeon"] = old_dungeon
+	ServerConfig.set_value("worldgen", "structures", structs)
+	World.generate(1234)  # restore the normal-density world
+
+	# 2) deterministic: register a structure, verify static + activation
+	var s: Node3D = StructuralIntegrity.new()
+	add_child(s)
+	var sp := Vector3i(gx + 12, gy + 2, gz + 12)
+	World.set_block(sp, 0)
+	var sidx := World.new_structure_index()
+	World.register_structure_block(sp, Blocks.by_name("stone"), sidx)
+	_check("structure: registered block is static", World.is_static_structure(sp))
+	s.recompute_full()
+	_check("structure: static block is supported (no collapse)", s.state_at(sp) == StructuralIntegrity.OK)
+	# modifying a neighbour wakes the whole structure (makes it dynamic)
+	var was_static := bool(World.structure_static.get(sidx, false))
+	_check("structure: starts static", was_static)
+	World.set_block(sp + Vector3i(1, 0, 0), Blocks.by_name("stone"))  # build next to it
+	var still_static := bool(World.structure_static.get(sidx, false))
+	_check("structure: modified -> activated (dynamic)", not still_static)
+	# cleanup
+	World.set_block(sp, 0)
+	World.set_block(sp + Vector3i(1, 0, 0), 0)
+	s.queue_free()
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():
