@@ -23,4 +23,7 @@ max_span = 1
 break_time = 0.7
 drop = 2
 is_terrain = true
+flammable = true
+flammability = 0.6
+cost = 1
 block_data = SubResource("Resource_bd")

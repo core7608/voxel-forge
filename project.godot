@@ -15,6 +15,7 @@ config/icon="res://icon.svg"
 
 InputBridge="*res://scripts/autoload/input_bridge.gd"
 Blocks="*res://scripts/autoload/block_registry.gd"
+ServerConfig="*res://scripts/autoload/server_config.gd"
 Sfx="*res://scripts/autoload/sfx.gd"
 Game="*res://scripts/autoload/game.gd"
 World="*res://scripts/autoload/world.gd"

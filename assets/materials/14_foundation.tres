@@ -22,4 +22,5 @@ support_value = 500.0
 max_span = 1
 break_time = 1.5
 foundation = true
+cost = 3
 block_data = SubResource("Resource_bd")

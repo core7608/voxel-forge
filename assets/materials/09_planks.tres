@@ -21,4 +21,7 @@ weight = 0.8
 support_value = 40.0
 max_span = 2
 break_time = 0.8
+flammable = true
+flammability = 0.7
+cost = 1
 block_data = SubResource("Resource_bd")

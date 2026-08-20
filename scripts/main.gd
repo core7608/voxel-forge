@@ -6,6 +6,7 @@ extends Node3D
 var hud: CanvasLayer
 var menu: CanvasLayer
 var structural: Node3D
+var fire: Node3D
 var day_night: Node
 var furniture: Node
 var challenges: Node
@@ -60,6 +61,11 @@ func _build_scene() -> void:
 	structural.name = "Structural"
 	structural.fx_parent = fx_layer
 	add_child(structural)
+
+	fire = FireSystem.new()
+	fire.name = "Fire"
+	fire.fx_parent = fx_layer
+	add_child(fire)
 
 	var fu_script := load("res://scripts/systems/furniture_system.gd")
 	furniture = fu_script.new()

@@ -21,4 +21,6 @@ weight = 2.0
 support_value = 400.0
 max_span = 1
 break_time = 2.0
+heat_conductive = true
+cost = 4
 block_data = SubResource("Resource_bd")

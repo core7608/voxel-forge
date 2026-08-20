@@ -71,8 +71,8 @@ func _ready() -> void:
 	else:
 		print("SKIP: pillar overload (not enough vertical space at y=%d)" % lgy)
 
-	# --- collapse after grace period ---
-	s.GRACE_SECONDS = 0.05
+	# --- collapse after grace period (grace now owner-tunable via ServerConfig) ---
+	ServerConfig.set_value("physics", "grace_seconds", 0.05)
 	var float_pos := Vector3i(gx, gy + 10, gz)
 	if World.get_block(float_pos.x, float_pos.y, float_pos.z) == 0:
 		World.set_block(float_pos, Blocks.by_name("planks"))
@@ -82,6 +82,27 @@ func _ready() -> void:
 		_check("structure: collapse removed block", World.get_block(float_pos.x, float_pos.y, float_pos.z) == 0)
 	else:
 		print("SKIP: collapse test (cell occupied)")
+	# restore default grace for the rest of the test
+	ServerConfig.set_value("physics", "grace_seconds", 12.0)
+
+	# --- ServerConfig: owner controls (Section 3.1) ---
+	_check("config: default grace is 12s", absf(ServerConfig.grace_seconds() - 12.0) < 0.01)
+	# material span override
+	var plank_mat: BlockMaterial = Blocks.mat(Blocks.by_name("planks"))
+	var base_span: int = ServerConfig.material_max_span(plank_mat)
+	ServerConfig.set_value("physics", "material_overrides", {"planks": {"max_span": 5}})
+	_check("config: material span override applies", ServerConfig.material_max_span(plank_mat) == 5)
+	ServerConfig.set_value("physics", "material_overrides", {})
+	_check("config: span override reverted", ServerConfig.material_max_span(plank_mat) == base_span)
+	# relaxed mode softens (never removes) support
+	ServerConfig.set_value("physics", "relaxed", true)
+	_check("config: relaxed increases span", ServerConfig.material_max_span(plank_mat) > base_span)
+	_check("config: relaxed disables collapse", not ServerConfig.collapse_enabled())
+	ServerConfig.set_value("physics", "relaxed", false)
+	_check("config: relaxed reverted", ServerConfig.collapse_enabled() and ServerConfig.material_max_span(plank_mat) == base_span)
+
+	# --- FireSystem: material fire/heat trade-offs (Section 1.5) ---
+	_fire_tests(gx, gz, gy)
 
 	# --- inventory & crafting ---
 	var inv := Inventory.new()
@@ -144,6 +165,83 @@ func _ready() -> void:
 	print("SMOKE TEST: %d passed, %d failed" % [_passes, _fails])
 	print("=====================================")
 	get_tree().quit(1 if _fails > 0 else 0)
+
+## Deterministic fire/heat trade-off tests (Section 1.5).
+func _fire_tests(gx: int, gz: int, gy: int) -> void:
+	var fire: FireSystem = FireSystem.new()
+	add_child(fire)
+	var log_id := Blocks.by_name("log")
+	var stone_id := Blocks.by_name("stone")
+	var reinf_id := Blocks.by_name("reinforced")
+	var oy := gy + 6
+	var ox := 2
+	# Row 1 (fire spread + firebreak): [log A][log B][stone C][log D]
+	var oz1 := 2
+	for i in range(4):
+		World.set_block(Vector3i(ox + i, oy, oz1), 0)
+	var A := Vector3i(ox + 0, oy, oz1)
+	var B := Vector3i(ox + 1, oy, oz1)
+	var C := Vector3i(ox + 2, oy, oz1)
+	var D := Vector3i(ox + 3, oy, oz1)
+	World.set_block(A, log_id)
+	World.set_block(B, log_id)
+	World.set_block(C, stone_id)
+	World.set_block(D, log_id)
+
+	# Row 2 (heat conduction): [log A2][reinforced E2][log F2]
+	var oz2 := 6
+	var A2 := Vector3i(ox + 0, oy, oz2)
+	var E2 := Vector3i(ox + 1, oy, oz2)
+	var F2 := Vector3i(ox + 2, oy, oz2)
+	for p in [A2, E2, F2]:
+		World.set_block(p, 0)
+	World.set_block(A2, log_id)
+	World.set_block(E2, reinf_id)
+	World.set_block(F2, log_id)
+
+	# 1) ignite flammable log
+	fire.ignite(A)
+	_check("fire: flammable log ignites", fire.burning.has(A))
+	# 2) fire spreads to adjacent flammable (B)
+	_step(fire, 1.2)
+	_check("fire: spreads to adjacent wood", fire.burning.has(B))
+	# 3) fire does NOT cross a stone firebreak (D stays unburned)
+	_step(fire, 6.0)
+	_check("fire: stone is a firebreak", World.get_block(D.x, D.y, D.z) == log_id)
+	# 4) heat conduction: ignite A2 (next to conductor E2) -> E2 heats -> F2 ignites
+	fire.ignite(A2)
+	_step(fire, 6.0)
+	_check("heat: conductor got hot", fire.hot.has(E2) or float(fire.hot.get(E2, 0.0)) > 0.0)
+	_check("heat: conductor lit the wood next to it", fire.burning.has(F2) or World.get_block(F2.x, F2.y, F2.z) == 0)
+	# cleanup: clear both rows
+	for i in range(4):
+		World.set_block(Vector3i(ox + i, oy, oz1), 0)
+	for p in [A2, E2, F2]:
+		World.set_block(p, 0)
+	fire.queue_free()
+
+	# --- Building sound as structural indicator (Section 1.1) ---
+	# test the stress-intensity math in isolation (deterministic)
+	var s2: Node3D = StructuralIntegrity.new()
+	add_child(s2)
+	s2.state = {}
+	s2.unstable_since = {}
+	var stable_intensity: float = s2._sound_intensity()
+	s2.state = {Vector3i(5, 5, 5): StructuralIntegrity.WARN, Vector3i(6, 5, 5): StructuralIntegrity.WARN}
+	s2.unstable_since = {}
+	var warn_intensity: float = s2._sound_intensity()
+	s2.unstable_since = {Vector3i(5, 5, 5): 0.0}
+	var un_intensity: float = s2._sound_intensity()
+	_check("sound: stable structure is calm", stable_intensity < 0.01)
+	_check("sound: warn state raises stress", warn_intensity > stable_intensity)
+	_check("sound: unstable raises stress most", un_intensity > warn_intensity)
+	s2.queue_free()
+
+func _step(fire: FireSystem, total: float) -> void:
+	var t := 0.0
+	while t < total:
+		fire.step(0.1)
+		t += 0.1
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():

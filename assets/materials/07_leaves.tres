@@ -23,4 +23,7 @@ max_span = 0
 break_time = 0.3
 drop = 101
 drop_chance = 0.35
+flammable = true
+flammability = 0.9
+cost = 1
 block_data = SubResource("Resource_bd")

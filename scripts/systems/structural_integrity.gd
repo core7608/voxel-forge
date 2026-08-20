@@ -22,7 +22,33 @@ const OK := 0
 const WARN := 1
 const UNSTABLE := 2
 
+## Fallback when ServerConfig is unavailable (tests / early boot).
 var GRACE_SECONDS := 12.0
+
+## Effective grace period (owner-tunable via ServerConfig, softened when relaxed).
+func _grace() -> float:
+	if ServerConfig != null:
+		return ServerConfig.grace_seconds()
+	return GRACE_SECONDS
+
+func _collapse_allowed() -> bool:
+	return ServerConfig == null or ServerConfig.collapse_enabled()
+
+## Owner-effective structural stats for a material.
+func _max_span(m: BlockMaterial) -> int:
+	if ServerConfig != null:
+		return ServerConfig.material_max_span(m)
+	return m.max_span
+
+func _support_value(m: BlockMaterial) -> float:
+	if ServerConfig != null:
+		return ServerConfig.material_support_value(m)
+	return m.support_value
+
+func _weight(m: BlockMaterial) -> float:
+	if ServerConfig != null:
+		return ServerConfig.material_weight(m)
+	return m.weight
 
 var state: Dictionary = {}        # Vector3i -> int
 var overhang: Dictionary = {}     # Vector3i -> int (distance from support chain)
@@ -38,6 +64,9 @@ var _visuals: Dictionary = {}     # Vector3i -> Node
 var _info_line: MeshInstance3D = null
 var _info_label: Label3D = null
 var _last_warn_sound := -10.0
+# building sound as a structural indicator (Section 1.1)
+var _sound_timer := 1.0
+const SOUND_MAX_INTERVAL := 5.0   # seconds between creaks at (near) full stability
 
 ## Godot 4.4 has no Line3D — 3D polylines are ImmediateMesh line primitives.
 func _set_line_points(mi: MeshInstance3D, points: PackedVector3Array) -> void:
@@ -75,10 +104,10 @@ func _process(dt: float) -> void:
 	var now := Time.get_ticks_msec() / 1000.0
 	var due := false
 	for p in unstable_since:
-		if now - unstable_since[p] >= GRACE_SECONDS:
+		if now - unstable_since[p] >= _grace():
 			due = true
 			break
-	if due:
+	if due and _collapse_allowed():
 		_collapse()
 	# Warning pulse + audio cue
 	for p in _visuals:
@@ -93,8 +122,50 @@ func _process(dt: float) -> void:
 	if unstable_since.size() > 0 and now - _last_warn_sound > 2.0:
 		_last_warn_sound = now
 		Sfx.play("warn")
+	_step_building_sound(dt, now)
 	_update_info_overlay(dt)
 	_emit_instability(now)
+
+## Section 1.1 — the building "feels" its own stability: as blocks approach or
+## enter the unstable state, wood creaks / cracks at random-ish intervals that
+## shrink as stability drops (no UI, purely sensory).
+func _step_building_sound(dt: float, now: float) -> void:
+	var intensity := _sound_intensity()
+	if intensity <= 0.0:
+		_sound_timer = SOUND_MAX_INTERVAL
+		return
+	_sound_timer -= dt
+	if _sound_timer > 0.0:
+		return
+	# next interval shrinks as stability drops (inverse relationship)
+	_sound_timer = (SOUND_MAX_INTERVAL * (1.0 - intensity) + 0.4) * randf_range(0.7, 1.3)
+	var un := unstable_since.size()
+	var sound := "crack" if un > 0 else "creak"
+	Sfx.play3d(sound, _sound_centroid(), -6.0)
+
+## 0..1 — how stressed the current structure is (warn + unstable blocks).
+func _sound_intensity() -> float:
+	var warn := 0
+	for p in state:
+		if state[p] == WARN:
+			warn += 1
+	var un := unstable_since.size()
+	if warn == 0 and un == 0:
+		return 0.0
+	return clampf(0.25 * minf(float(warn) / 3.0, 1.0) + 0.75 * minf(float(un) / 2.0, 1.0), 0.0, 1.0)
+
+func _sound_centroid() -> Vector3:
+	var keys: Array = unstable_since.keys()
+	if keys.is_empty():
+		for p in state:
+			if state[p] == WARN:
+				keys.append(p)
+	if keys.is_empty():
+		return get_tree().get_first_node_in_group("player").global_position
+	var c := Vector3.ZERO
+	for p in keys:
+		c += Vector3(p) + Vector3(0.5, 0.5, 0.5)
+	return c / keys.size()
 
 func _emit_instability(now: float) -> void:
 	var count := unstable_since.size()
@@ -104,7 +175,7 @@ func _emit_instability(now: float) -> void:
 		for p in unstable_since:
 			if unstable_since[p] < oldest:
 				oldest = unstable_since[p]
-		remaining = maxf(0.0, GRACE_SECONDS - (now - oldest))
+		remaining = maxf(0.0, _grace() - (now - oldest))
 	emit_signal("instability_changed", count, remaining)
 
 # --- core solver -------------------------------------------------------------
@@ -146,7 +217,7 @@ func _solve(blocks: Dictionary) -> Dictionary:
 		var up := cur + Vector3i.UP
 		if blocks.has(up):
 			var mu: BlockMaterial = Blocks.mat(blocks[up])
-			if mu != null and dc <= mu.max_span and (not d.has(up) or dc < d[up]):
+			if mu != null and dc <= _max_span(mu) and (not d.has(up) or dc < d[up]):
 				d[up] = dc
 				par[up] = cur
 				q.append(up)
@@ -158,7 +229,7 @@ func _solve(blocks: Dictionary) -> Dictionary:
 			if mn == null:
 				continue
 			var nd := dc + 1
-			if nd > mn.max_span:
+			if nd > _max_span(mn):
 				continue
 			if not d.has(nb) or nd < d[nb]:
 				d[nb] = nd
@@ -182,7 +253,7 @@ func _solve(blocks: Dictionary) -> Dictionary:
 			new_load[p] = above
 			var m: BlockMaterial = Blocks.mat(blocks[p])
 			if m != null:
-				above += m.weight
+				above += _weight(m)
 
 	var new_state: Dictionary = {}
 	for p in blocks:
@@ -194,12 +265,13 @@ func _solve(blocks: Dictionary) -> Dictionary:
 			new_state[p] = UNSTABLE
 			continue
 		var st := OK
-		if d[p] >= m.max_span:
+		if d[p] >= _max_span(m):
 			st = WARN
+		var sup := _support_value(m)
 		var l: float = new_load.get(p, 0.0)
-		if l > m.support_value:
+		if l > sup:
 			st = UNSTABLE
-		elif l > m.support_value * 0.8:
+		elif l > sup * 0.8:
 			st = max(st, WARN)
 		new_state[p] = st
 

@@ -22,4 +22,5 @@ support_value = 60.0
 max_span = 1
 break_time = 0.5
 is_terrain = true
+cost = 1
 block_data = SubResource("Resource_bd")

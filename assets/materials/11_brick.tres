@@ -21,4 +21,5 @@ weight = 1.5
 support_value = 90.0
 max_span = 1
 break_time = 1.4
+cost = 2
 block_data = SubResource("Resource_bd")

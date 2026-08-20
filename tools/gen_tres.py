@@ -59,13 +59,35 @@ COLORS = {
     4: (0.24, 0.24, 0.27), 5: (0.85, 0.78, 0.55), 6: (0.45, 0.32, 0.18),
     7: (0.30, 0.52, 0.25), 8: (0.55, 0.55, 0.58), 9: (0.72, 0.55, 0.34),
     10: (0.55, 0.42, 0.26), 11: (0.62, 0.33, 0.28), 12: (0.62, 0.62, 0.65),
-    13: (0.45, 0.52, 0.62), 14: (0.35, 0.36, 0.40),
+    13: (0.45, 0.52, 0.62), 14: (0.35, 0.36, 0.40), 15: (0.9, 0.9, 0.93),
+}
+
+# fire/heat trade-offs per id: (flammable, flammability, heat_conductive, cost)
+# No absolute best material: wood is cheap+fast but burns; stone is safe but
+# heavy; reinforced is strongest but rare and conducts heat (Section 1.5).
+FIRE = {
+    1: (True, 0.6, False, 1),   # Grass
+    2: (False, 0.0, False, 1),  # Dirt
+    3: (False, 0.0, False, 2),  # Stone
+    4: (False, 0.0, False, 5),  # Bedrock
+    5: (False, 0.0, False, 1),  # Sand
+    6: (True, 0.8, False, 1),   # Log
+    7: (True, 0.9, False, 1),   # Leaves
+    8: (False, 0.0, False, 3),  # Iron Ore
+    9: (True, 0.7, False, 1),   # Planks
+    10: (True, 0.4, False, 2),  # Treated Wood (fire-treated, burns slower)
+    11: (False, 0.0, False, 2), # Brick
+    12: (False, 0.0, True, 5),  # Reinforced (rebar: no burn, conducts heat)
+    13: (False, 0.0, True, 4),  # Steel Column
+    14: (False, 0.0, False, 3), # Foundation
+    15: (False, 0.0, False, 4), # Marble (mod)
 }
 
 
 def material_tres(i, name, model, tint):
     w, sup, span, bt, drop, dc, terr, unb, fnd = PHYS[i]
     r, g, b = COLORS[i]
+    flam, flamb, cond, cost = FIRE[i]
     tint_line = "tint = Color(%.2f, %.2f, %.2f, 1)" % tint if tint else "tint = Color(1, 1, 1, 1)"
     lines = []
     lines.append('[gd_resource type="Resource" script_class="BlockMaterial" format=3]')
@@ -101,6 +123,12 @@ def material_tres(i, name, model, tint):
         lines.append("unbreakable = true")
     if fnd:
         lines.append("foundation = true")
+    if flam:
+        lines.append("flammable = true")
+        lines.append("flammability = %.1f" % flamb)
+    if cond:
+        lines.append("heat_conductive = true")
+    lines.append("cost = %d" % cost)
     lines.append('block_data = SubResource("Resource_bd")')
     lines.append("")
     write("assets/materials/%02d_%s.tres" % (i, name.lower().replace(" ", "_")), "\n".join(lines))
@@ -165,6 +193,7 @@ def main():
         "support_value = %.1f" % sup,
         "max_span = %d" % span,
         "break_time = %.1f" % bt,
+        "cost = 4",
         'block_data = SubResource("Resource_bd")',
         "",
     ])

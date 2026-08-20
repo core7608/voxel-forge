@@ -19,6 +19,17 @@ extends Resource
 @export var is_terrain: bool = false          # terrain = permanent support root, never collapses
 @export var unbreakable: bool = false
 @export var foundation: bool = false          # may act as a support root when sitting on ground
+## --- Fire / heat trade-offs (Section 1.5: no absolute best material) ---
+## flammable: can catch fire and burn (wood yes, stone/brick no).
+@export var flammable: bool = false
+## flammability: 0..1, how fast it burns once ignited (higher = faster).
+@export_range(0.0, 1.0) var flammability: float = 0.5
+## heat_conductive: does NOT burn but gets hot and conducts heat to neighbours
+## (reinforced/rebar: the "safe but warm" trade-off).
+@export var heat_conductive: bool = false
+## Relative resource cost (1=cheap wood ... 5=rare reinforced). Drives the
+## cost/benefit trade-off so "strongest" is never the free default choice.
+@export_range(1, 5) var cost: int = 1
 ## Visual model binding — points at a REAL imported Kenney/KayKit model
 ## (see BlockData). If null/empty, the renderer falls back to a unit cube.
 @export var block_data: BlockData = null

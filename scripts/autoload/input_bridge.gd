@@ -23,6 +23,7 @@ const _BOOTSTRAP := [
 	preload("res://scripts/voxel/voxel_ray.gd"),
 	preload("res://scripts/voxel/voxel_mover.gd"),
 	preload("res://scripts/systems/structural_integrity.gd"),
+	preload("res://scripts/systems/fire_system.gd"),
 	preload("res://scripts/systems/inventory.gd"),
 	preload("res://scripts/systems/character_model.gd"),
 	preload("res://scripts/systems/furniture_catalog.gd"),
