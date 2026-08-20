@@ -166,6 +166,9 @@ func _ready() -> void:
 	# --- City system (Section 3.2) ---
 	_city_tests(gx, gz, gy)
 
+	# --- Interactive furniture (Section 8) ---
+	_interact_tests(gx, gz, gy)
+
 	print("")
 	print("=====================================")
 	print("SMOKE TEST: %d passed, %d failed" % [_passes, _fails])
@@ -388,6 +391,46 @@ func _city_tests(gx: int, gz: int, gy: int) -> void:
 		for dz in range(8):
 			for dy in range(3):
 				World.set_block(Vector3i(bx + dx, gy + 1 + dy, bz + dz), 0)
+
+## Interactive furniture tests (Section 8): TV, bed, chair.
+func _interact_tests(gx: int, gz: int, gy: int) -> void:
+	var furn := FurnitureSystem.new()
+	add_child(furn)
+	var base := Vector3(gx + 0.5, gy + 1.0, gz + 8.0)
+	# TV
+	var tv_item := FurnitureCatalog.get_item(16)
+	var tv := furn.create_entity(tv_item, base, 0.0, 0)
+	furn.interact_at(tv, _make_fake_player(base + Vector3(0, 0, 1.5)))
+	_check("furniture: TV turns on", bool(tv.get("tv_on", false)))
+	furn.interact_at(tv, _make_fake_player(base + Vector3(0, 0, 1.5)))
+	_check("furniture: TV turns off", not bool(tv.get("tv_on", false)))
+	# Bed (sleep -> morning)
+	var dn: Node = load("res://scripts/systems/day_night.gd").new()
+	dn.add_to_group("day_night")
+	dn._ready()
+	dn.t = 0.75  # night
+	add_child(dn)
+	var bed_item := FurnitureCatalog.get_item(7)
+	var bed := furn.create_entity(bed_item, base + Vector3(4, 0, 0), 0.0, 0)
+	furn.interact_at(bed, _make_fake_player(base + Vector3(4, 0, 1.5)))
+	_check("furniture: bed sleeps to morning", absf(dn.t - 0.25) < 0.01)
+	# Chair (sit -> stand)
+	var chair_item := FurnitureCatalog.get_item(1)
+	var chair := furn.create_entity(chair_item, base + Vector3(8, 0, 0), 0.0, 0)
+	var player := _make_fake_player(base + Vector3(8, 0, 1.5))
+	furn.interact_at(chair, player)
+	_check("furniture: chair sit", furn._sitting_root == chair["node"])
+	furn.interact_at(chair, player)
+	_check("furniture: chair stand", furn._sitting_root == null)
+	dn.queue_free()
+	furn.clear_all()
+	furn.queue_free()
+
+func _make_fake_player(pos: Vector3) -> Node3D:
+	var p := Node3D.new()
+	p.global_position = pos
+	add_child(p)
+	return p
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():

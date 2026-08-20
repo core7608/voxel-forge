@@ -1,3 +1,4 @@
+class_name FurnitureSystem
 extends Node3D
 ## FurnitureSystem — free placement of non-voxel (Kenney) furniture.
 ##
@@ -324,6 +325,9 @@ func create_entity(item: Dictionary, p: Vector3, rot: float, variant: int, from_
 		omni.energy = 0.9
 		omni.omni_range = 6.0
 		root.add_child(omni)
+	# interactive TV: an animated screen on the front (Section 8.2, stage 1)
+	if item.get("tv", false):
+		_add_tv_screen(root, item["size"])
 	if not item.get("no_collider", false):
 		var sb := StaticBody3D.new()
 		sb.collision_layer = 4
@@ -695,6 +699,125 @@ func _update_ghost() -> void:
 	var sm: StandardMaterial3D = _ghost_mesh.material_override
 	sm.albedo_color = Color(0.3, 1.0, 0.4) if _ghost_valid else Color(1.0, 0.25, 0.2)
 	_ghost.visible = true
+
+# --- interactive furniture (Section 8) -------------------------------------------------
+
+var _sitting_root: Node = null
+var _sit_restore: Vector3 = Vector3.ZERO
+
+signal interacted(text: String)
+
+## Build the TV's animated screen plane on the front of the model.
+func _add_tv_screen(root: Node3D, size: Vector3) -> MeshInstance3D:
+	var screen := MeshInstance3D.new()
+	screen.name = "tv_screen"
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(size.x * 0.7, size.y * 0.55)
+	screen.mesh = plane
+	screen.position = Vector3(0, size.y * 0.55, size.z * 0.5 + 0.01)
+	var sh: Shader = load("res://assets/shaders/tv_screen.gdshader")
+	var sm := ShaderMaterial.new()
+	sm.shader = sh
+	screen.material_override = sm
+	root.add_child(screen)
+	return screen
+
+## Called by the player's interact action. Returns true if something happened.
+func interact(player: Node3D) -> bool:
+	# find the nearest interactive furniture within range & roughly in front
+	var best: Dictionary = {}
+	var best_d := 2.6
+	var fwd := (player.global_transform.basis * Vector3.BACK).normalized()
+	for it in items:
+		var item := FurnitureCatalog.get_item(int(it["item_id"]))
+		if not item.has("interact"):
+			continue
+		var center: Vector3 = it["pos"] + Vector3(0, item["size"].y * 0.5, 0)
+		var d: float = player.global_position.distance_to(center)
+		if d > best_d:
+			continue
+		var to_furn := (center - player.global_position).normalized()
+		if fwd.dot(to_furn) < 0.2:  # must be roughly in front
+			continue
+		best_d = d
+		best = it
+	if best.is_empty():
+		# sitting but nothing in front: stand up
+		if _sitting_root != null and is_instance_valid(_sitting_root):
+			_stand_up(player)
+			return true
+		return false
+	return _run_interact(best, player)
+
+## Interact directly with a specific furniture item (used by tests / UI).
+func interact_at(it: Dictionary, player: Node3D) -> bool:
+	return _run_interact(it, player)
+
+func _run_interact(it: Dictionary, player: Node3D) -> bool:
+	# if currently sitting, any interact stands the player up first
+	if _sitting_root != null and is_instance_valid(_sitting_root):
+		_stand_up(player)
+		return true
+	var item := FurnitureCatalog.get_item(int(it["item_id"]))
+	match str(item.get("interact", "")):
+		"sit": _do_sit(player, it)
+		"sleep": _do_sleep(player)
+		"craft":
+			_emit_interacted("Furnace (open crafting with C)")
+		"watch": _toggle_tv(it)
+		_: return false
+	return true
+
+func _do_sit(player: Node3D, it: Dictionary) -> void:
+	_sitting_root = it["node"]
+	_sit_restore = player.global_position
+	var seat: Vector3 = it["pos"] + Vector3(0, 0.5, 0)
+	player.global_position = seat
+	_emit_interacted("Sitting down")
+
+func _stand_up(player: Node3D) -> void:
+	if _sitting_root != null and is_instance_valid(_sitting_root):
+		var it: Dictionary = {}
+		for i in items:
+			if i["node"] == _sitting_root:
+				it = i
+				break
+		var away: Vector3 = (player.global_position - (it["pos"] as Vector3)).normalized()
+		if away.length() < 0.1:
+			away = Vector3.BACK
+		player.global_position = (it["pos"] as Vector3) + away * 0.9 + Vector3(0, 0.2, 0)
+	_sitting_root = null
+	_emit_interacted("Standing up")
+
+func _do_sleep(player: Node3D) -> void:
+	var dn: Node = get_tree().get_first_node_in_group("day_night")
+	if dn != null and dn.has_method("skip_to_morning"):
+		dn.skip_to_morning()
+	_emit_interacted("Slept until morning")
+
+func _toggle_tv(it: Dictionary) -> void:
+	var root: Node3D = it["node"]
+	var screen: MeshInstance3D = root.get_node_or_null("tv_screen")
+	if screen == null:
+		return
+	var sm: ShaderMaterial = screen.material_override
+	if sm == null:
+		return
+	if it.get("tv_on", false):
+		# off: hide the animated screen (black glass)
+		sm.set_shader_parameter("speed", 0.0)
+		screen.visible = false
+		it["tv_on"] = false
+		_emit_interacted("TV off")
+	else:
+		screen.visible = true
+		sm.set_shader_parameter("speed", 1.0)
+		it["tv_on"] = true
+		_emit_interacted("TV on")
+
+func _emit_interacted(text: String) -> void:
+	emit_signal("interacted", text)
+	Game.toast(text)
 
 # --- net wiring --------------------------------------------------------------------------
 

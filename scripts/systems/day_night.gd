@@ -59,6 +59,19 @@ func _process(dt: float) -> void:
 func is_night() -> bool:
 	return _is_night
 
+## Jump the clock to morning (used by the Bed "sleep" interaction).
+func skip_to_morning() -> void:
+	# t=0.25 is ~6:00 morning in this cycle
+	t = 0.25
+	_recompute_phase()
+
+func _recompute_phase() -> void:
+	var ang := t * TAU - PI / 2.0
+	var night: bool = sin(ang) < -0.03
+	if night != _is_night:
+		_is_night = night
+		emit_signal("phase_changed", night)
+
 ## "hh:mm" style clock for the HUD (0 = midnight).
 func clock_text() -> String:
 	var hours := fposmod(t + 0.25, 1.0) * 24.0  # t=0.25 -> 6:00 morning

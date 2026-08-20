@@ -435,6 +435,10 @@ func _eat() -> void:
 	Game.toast("Ate %s (+%d hunger)" % [Blocks.item_name(id), Blocks.food_value(id)])
 
 func _interact() -> void:
+	# interactive furniture first (sit / sleep / craft / TV)
+	var furn: Node = _furniture()
+	if furn != null and furn.has_method("interact") and furn.interact(self):
+		return
 	var v: Node = get_tree().get_first_node_in_group("villager")
 	if v == null:
 		return

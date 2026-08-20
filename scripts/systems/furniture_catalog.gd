@@ -11,6 +11,7 @@ const MD := "res://assets/kenney/mini-dungeon/models"
 
 const ITEMS: Array = [
 	{"id": 1, "name": "Chair", "glb": "chair.glb", "size": Vector3(0.8, 0.95, 0.8),
+	 "interact": "sit",
 	 "variants": [Color(0.62, 0.44, 0.26), Color(0.55, 0.25, 0.2), Color(0.25, 0.35, 0.5)],
 	 "prims": [[0, 0.8, 0.45, 0.8, [0, 0.45, 0]], [0, 0.8, 0.45, 0.8, [0, 0.9, 0]], [0, 0.7, 0.5, 0.1, [-0.3, 0.45, -0.3]], [0, 0.7, 0.5, 0.1, [0.3, 0.45, -0.3]]]},
 	{"id": 2, "name": "Lounge Chair", "glb": "loungeChair.glb", "size": Vector3(1.0, 0.9, 0.95),
@@ -29,6 +30,7 @@ const ITEMS: Array = [
 	 "variants": [Color(0.55, 0.4, 0.26), Color(0.25, 0.3, 0.35), Color(0.65, 0.55, 0.4)],
 	 "prims": [[0, 1.45, 0.06, 0.65, [0, 0.72, 0]], [0, 0.1, 0.65, 0.1, [-0.65, 0.36, 0]], [0, 0.1, 0.65, 0.1, [0.65, 0.36, 0]]]},
 	{"id": 7, "name": "Bed", "glb": "bedSingle.glb", "size": Vector3(1.2, 0.6, 2.1),
+	 "interact": "sleep",
 	 "variants": [Color(0.55, 0.3, 0.35), Color(0.3, 0.4, 0.55), Color(0.6, 0.5, 0.3)],
 	 "prims": [[0, 1.15, 0.35, 2.05, [0, 0.3, 0]], [0, 1.0, 0.25, 0.4, [0, 0.45, -0.85]], [0, 0.9, 0.2, 0.35, [0, 0.5, -0.7]]]},
 	{"id": 8, "name": "Bookshelf", "glb": "bookcaseOpen.glb", "size": Vector3(1.0, 2.0, 0.4),
@@ -51,6 +53,13 @@ const ITEMS: Array = [
 	 "variants": [Color(1, 1, 1)], "prims": [[1, 0.5, 0.5, 0.5, [0, 0.25, 0]]]},
 	{"id": 14, "name": "Chest", "glb": "chest.glb", "src": MD, "size": Vector3(0.75, 0.5, 0.55),
 	 "variants": [Color(1, 1, 1)], "prims": [[0, 0.7, 0.4, 0.5, [0, 0.2, 0]]]},
+	# --- interactive furniture (Section 8) ---
+	{"id": 15, "name": "Furnace", "glb": "kitchenStove.glb", "size": Vector3(1.0, 1.2, 0.9),
+	 "interact": "craft",
+	 "variants": [Color(1, 1, 1)], "prims": [[0, 1.0, 1.2, 0.9, [0, 0.6, 0]]]},
+	{"id": 16, "name": "Television", "glb": "televisionModern.glb", "size": Vector3(1.0, 1.0, 0.4),
+	 "interact": "watch", "tv": true,
+	 "variants": [Color(1, 1, 1)], "prims": [[0, 1.0, 1.0, 0.4, [0, 0.5, 0]]]},
 ]
 
 ## prims entry: [shape, size.x, size.y, size.z, offset] — shape: 0 box, 1 cylinder, 2 sphere
