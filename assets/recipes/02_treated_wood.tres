@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CraftRecipe" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/craft_recipe.gd" id="1_s"]
+
+[resource]
+script = ExtResource("1_s")
+name = "Treated Wood"
+inputs = {
+9: 2
+}
+output = 10
+output_count = 2

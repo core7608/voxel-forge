@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  release:
+    types: [created]
+
+jobs:
+  test:
+    name: Import + Smoke Test (Godot 4.4 headless)
+    runs-on: ubuntu-latest
+    container: godot-ci/godot:4.4-stable
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import assets (headless editor pass)
+        run: godot --headless --import
+
+      - name: Run smoke tests
+        run: godot --headless scenes/smoke_test.tscn
+
+      - name: Boot check (main scene ~4s)
+        run: godot --headless --quit-after 400
+
+  # ------------------------------------------------------------------
+  # Export pipeline (Windows/Mac/Linux) — يُفعّل عند إضافة export presets
+  # في الريبو (project.godot يحتاج إعداد تصدير لكل منصة من داخل المحرر).
+  #
+  # export:
+  #   needs: test
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - { os: ubuntu-latest,   preset: "Linux" }
+  #         - { os: ubuntu-latest,   preset: "Windows Desktop" }
+  #         - { os: macos-latest,    preset: "macOS" }
+  #   runs-on: ${{ matrix.os }}
+  #   container: ${{ matrix.os == 'ubuntu-latest' && 'godot-ci/godot:4.4-stable' || '' }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Export
+  #        run: godot --headless --export-release "${{ matrix.preset }}" build/voxelforge
+  #     - uses: actions/upload-artifact@v4
+  #       with: { name: voxel-forge-${{ matrix.preset }}, path: build/ }
+  # ------------------------------------------------------------------

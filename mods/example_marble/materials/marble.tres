@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BlockMaterial" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/block_material.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/resources/block_data.gd" id="2_s"]
+
+[sub_resource type="Resource" id="Resource_bd"]
+script = ExtResource("2_s")
+display_name = "Marble"
+model_path = "res://assets/kenney/nature-kit/Models/GLTF format/cliff_block_stone.glb"
+fit_to_grid = true
+inset = 0.98
+tint = Color(0.92, 0.92, 0.95, 1)
+
+[resource]
+script = ExtResource("1_s")
+id = 15
+atlas_cell = 14
+name = "Marble"
+color = Color(0.9, 0.9, 0.93, 1)
+weight = 2.0
+support_value = 120.0
+max_span = 3
+break_time = 1.6
+block_data = SubResource("Resource_bd")

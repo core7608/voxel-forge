@@ -1,0 +1,7 @@
+* text=auto
+*.png binary
+*.jpg binary
+*.glb binary
+*.zip binary
+*.godot binary
+*.uid binary

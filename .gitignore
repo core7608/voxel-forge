@@ -1,0 +1,19 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+*.tmp
+export/
+
+# Imported translations (automatically generated from CSV files)
+*.translation
+
+# Godot-specific build artifacts
+build/
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# User data never belongs in the repo
+user_saves/
+saves/

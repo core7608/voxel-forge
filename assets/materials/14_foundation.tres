@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="BlockMaterial" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/block_material.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/resources/block_data.gd" id="2_s"]
+
+[sub_resource type="Resource" id="Resource_bd"]
+script = ExtResource("2_s")
+display_name = "Foundation"
+model_path = "res://assets/kenney/mini-dungeon/models/floor.glb"
+fit_to_grid = true
+inset = 0.98
+tint = Color(1, 1, 1, 1)
+
+[resource]
+script = ExtResource("1_s")
+id = 14
+atlas_cell = 13
+name = "Foundation"
+color = Color(0.35, 0.36, 0.40, 1)
+weight = 3.0
+support_value = 500.0
+max_span = 1
+break_time = 1.5
+foundation = true
+block_data = SubResource("Resource_bd")

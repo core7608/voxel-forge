@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftRecipe" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/craft_recipe.gd" id="1_s"]
+
+[resource]
+script = ExtResource("1_s")
+name = "Reinforced (rebar + stone)"
+inputs = {
+3: 2,
+8: 1
+}
+output = 12
+output_count = 1

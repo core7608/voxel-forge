@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="ModManifest" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/mod_manifest.gd" id="1_s"]
+
+[resource]
+script = ExtResource("1_s")
+name = "Marble Mod (Example)"
+version = "1.0"
+description = "Template community mod: adds a Marble block (span 3, heavy, strong) with a recipe, plus a tiny GDScript hook. Copy this folder to make your own mod."
+materials = PackedStringArray("materials/marble.tres")
+recipes = PackedStringArray("recipes/marble.tres")
+scripts = PackedStringArray("scripts/greet.gd")

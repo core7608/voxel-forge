@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="BlockMaterial" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/block_material.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/resources/block_data.gd" id="2_s"]
+
+[sub_resource type="Resource" id="Resource_bd"]
+script = ExtResource("2_s")
+display_name = "Log"
+model_path = "res://assets/kenney/mini-dungeon/models/wood-structure.glb"
+fit_to_grid = true
+inset = 0.98
+tint = Color(1, 1, 1, 1)
+
+[resource]
+script = ExtResource("1_s")
+id = 6
+atlas_cell = 5
+name = "Log"
+color = Color(0.45, 0.32, 0.18, 1)
+weight = 1.0
+support_value = 50.0
+max_span = 2
+break_time = 0.9
+block_data = SubResource("Resource_bd")

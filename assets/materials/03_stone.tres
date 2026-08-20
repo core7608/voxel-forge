@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="BlockMaterial" format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/block_material.gd" id="1_s"]
+[ext_resource type="Script" path="res://scripts/resources/block_data.gd" id="2_s"]
+
+[sub_resource type="Resource" id="Resource_bd"]
+script = ExtResource("2_s")
+display_name = "Stone"
+model_path = "res://assets/kenney/nature-kit/Models/GLTF format/cliff_block_stone.glb"
+fit_to_grid = true
+inset = 0.98
+tint = Color(1, 1, 1, 1)
+
+[resource]
+script = ExtResource("1_s")
+id = 3
+atlas_cell = 2
+name = "Stone"
+color = Color(0.55, 0.55, 0.58, 1)
+weight = 2.0
+support_value = 100.0
+max_span = 1
+break_time = 1.2
+is_terrain = true
+block_data = SubResource("Resource_bd")
