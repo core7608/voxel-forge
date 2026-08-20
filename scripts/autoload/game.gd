@@ -26,6 +26,7 @@ var settings := {
 	"snap_grid": true,
 	"trust_mod_scripts": false,
 	"tut_seen": false,
+	"ai_difficulty": "Medium",
 }
 
 func _ready() -> void:

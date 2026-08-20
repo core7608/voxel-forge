@@ -276,8 +276,17 @@ func _spawn_beast() -> void:
 	var mon: Node3D = load("res://scripts/npc/monster.gd").new()
 	mon.global_position = Vector3(xi + 0.5, gy + 1.05, zi + 0.5)
 	add_child(mon)
+	mon.set_difficulty(_ai_difficulty())
+	mon.structural = structural
 	mon.active = true
 	_beasts.append(mon)
+
+## Difficulty preset from the owner's setting (Section 7).
+func _ai_difficulty() -> AIDifficulty:
+	match str(Game.settings.get("ai_difficulty", "Medium")):
+		"Easy": return AIDifficulty.easy()
+		"Hard": return AIDifficulty.hard()
+		_: return AIDifficulty.medium()
 
 func _kill_beasts() -> void:
 	for b in _beasts:

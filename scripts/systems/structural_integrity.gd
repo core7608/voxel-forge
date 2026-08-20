@@ -295,6 +295,29 @@ func _commit(res: Dictionary) -> void:
 func state_at(p: Vector3i) -> int:
 	return int(state.get(p, OK))
 
+## Nearest "critically stressed" block to `from` within `range` — an UNSTABLE
+## block, or a support near overload (load > 80% of capacity). Used by hard
+## AI to strategically attack a structure's weak point (Section 7).
+func nearest_weak_block(from: Vector3i, range: int) -> Vector3i:
+	var best := Vector3i.MIN
+	var best_d := range + 1
+	for p in state:
+		var st: int = state[p]
+		var stressed := st == UNSTABLE
+		if not stressed:
+			var m: BlockMaterial = Blocks.mat(int(World.placed.get(p, 0)))
+			if m != null:
+				var sup := _support_value(m)
+				if sup > 0.0 and float(load_on.get(p, 0.0)) > sup * 0.8:
+					stressed = true
+		if not stressed:
+			continue
+		var d := absi(p.x - from.x) + absi(p.y - from.y) + absi(p.z - from.z)
+		if d < best_d:
+			best_d = d
+			best = p
+	return best
+
 # --- instability visuals -----------------------------------------------------
 
 func _sync_visuals() -> void:

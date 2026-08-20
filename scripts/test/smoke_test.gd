@@ -237,11 +237,48 @@ func _fire_tests(gx: int, gz: int, gy: int) -> void:
 	_check("sound: unstable raises stress most", un_intensity > warn_intensity)
 	s2.queue_free()
 
+	# --- AI difficulty (Section 7): flexible 3-tier behaviour ---
+	_ai_tests(gx, gz, gy)
+
 func _step(fire: FireSystem, total: float) -> void:
 	var t := 0.0
 	while t < total:
 		fire.step(0.1)
 		t += 0.1
+
+## AI difficulty tests (Section 7): preset ordering + flexible state machine.
+func _ai_tests(gx: int, gz: int, gy: int) -> void:
+	var easy := AIDifficulty.easy()
+	var med := AIDifficulty.medium()
+	var hard := AIDifficulty.hard()
+	_check("ai: detection easy < medium < hard", easy.detection_range < med.detection_range and med.detection_range < hard.detection_range)
+	_check("ai: hard hunts weaknesses more than easy", hard.weakness_target_chance > easy.weakness_target_chance)
+	_check("ai: easy flees more readily than hard", easy.flee_chance > hard.flee_chance)
+	_check("ai: hard reacts faster than easy", hard.reaction_time < easy.reaction_time)
+	# state machine: a monster near a player senses and transitions to CHASE
+	var mon: Node3D = load("res://scripts/npc/monster.gd").new()
+	add_child(mon)
+	mon.global_position = Vector3(gx + 0.5, gy + 2.0, gz + 0.5)
+	mon.difficulty = AIDifficulty.medium()
+	mon.difficulty.night_only = false  # allow daytime detection for the test
+	mon.state = mon.State.IDLE
+	mon._last_dt = 0.1
+	var fake_player := Node3D.new()
+	fake_player.add_to_group("player")
+	fake_player.global_position = mon.global_position + Vector3(4, 0, 0)
+	add_child(fake_player)
+	# sensing should be active (player within range, daytime allowed)
+	var strength: float = mon._sensing_strength()
+	_check("ai: senses nearby player", strength > 0.0)
+	# drive sensing past the reaction time -> should chase
+	for i in 20:
+		mon._step_idle(0.1)
+	_check("ai: transitions to CHASE after reaction time", mon.state == mon.State.CHASE)
+	# far player is not sensed
+	fake_player.global_position = mon.global_position + Vector3(60, 0, 0)
+	_check("ai: ignores distant player", mon._sensing_strength() <= 0.0)
+	fake_player.queue_free()
+	mon.queue_free()
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():

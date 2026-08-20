@@ -14,6 +14,7 @@ extends Node
 const _BOOTSTRAP := [
 	preload("res://scripts/resources/block_data.gd"),
 	preload("res://scripts/resources/block_material.gd"),
+	preload("res://scripts/resources/ai_difficulty.gd"),
 	preload("res://scripts/resources/craft_recipe.gd"),
 	preload("res://scripts/resources/design_blueprint.gd"),
 	preload("res://scripts/resources/mod_manifest.gd"),
