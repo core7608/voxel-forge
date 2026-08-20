@@ -13,6 +13,11 @@ var challenges: Node
 var player: Node
 var villager: Node
 var fx_layer: Node3D
+# sensory / social layer (Section 1)
+var place_memory: Node
+var land: Node
+var maturity: Node
+var _memory_t := 0.0
 var remotes: Dictionary = {}
 var _started := false
 var _dedicated := false
@@ -76,6 +81,23 @@ func _build_scene() -> void:
 	challenges = ch_script.new()
 	challenges.name = "Challenges"
 	add_child(challenges)
+
+	# sensory / social layer (Section 1)
+	place_memory = load("res://scripts/systems/place_memory.gd").new()
+	place_memory.name = "PlaceMemory"
+	place_memory.fx_parent = fx_layer
+	add_child(place_memory)
+	land = load("res://scripts/systems/land_registry.gd").new()
+	land.name = "Land"
+	add_child(land)
+	maturity = load("res://scripts/systems/maturity.gd").new()
+	maturity.name = "Maturity"
+	add_child(maturity)
+	# build activity -> memory + land claim + maturity
+	Game.block_placed.connect(_on_block_placed_social)
+	land.owner_notified.connect(func(owner, text): Game.toast("🏳 %s" % text))
+	CityManager.city_created.connect(func(_idx): maturity.record_government())
+	furniture.emblem_placed.connect(func(pos, emblem, by): land.place_emblem(by, pos, emblem))
 
 	villager = load("res://scripts/npc/villager.gd").new()
 	villager.name = "Villager"
@@ -253,6 +275,12 @@ func _process(dt: float) -> void:
 		return
 	if day_night == null:
 		return
+	# periodically let abandoned structures grow over (Section 1.2)
+	_memory_t += dt
+	if _memory_t >= 30.0:
+		_memory_t = 0.0
+		for r in place_memory.last_activity:
+			place_memory.apply_effects(Vector3(int(r.x) * 16 + 8, 0, int(r.y) * 16 + 8))
 	if Game.mode == Game.Mode.SURVIVAL and day_night.is_night():
 		_spawn_t += dt
 		if _spawn_t > 8.0 and _beasts.size() < 3:
@@ -293,3 +321,16 @@ func _kill_beasts() -> void:
 		if is_instance_valid(b):
 			b.queue_free()
 	_beasts.clear()
+
+# --- sensory / social layer (Section 1) ------------------------------------
+
+func _on_block_placed_social(pos: Vector3i, _mat: int, _by_peer: int) -> void:
+	var pl_name := _local_player_name()
+	place_memory.record_activity(Vector3(pos))
+	land.claim_at(pl_name, Vector3(pos))
+	maturity.record_build(pl_name)
+
+func _local_player_name() -> String:
+	if player != null and player.has_method("get_player_name"):
+		return str(player.get_player_name())
+	return "local"

@@ -34,6 +34,9 @@ var furniture_layer: Node3D
 
 signal furniture_changed
 signal mode_changed(palette: bool, design: bool)
+## Symbolic building (Section 1.4): an emblem was placed (building as
+## non-verbal communication). Main routes this to the LandRegistry.
+signal emblem_placed(pos: Vector3, emblem: String, by_player: String)
 
 ## Godot 4.4 has no Line3D — 3D polylines are ImmediateMesh line primitives.
 func _set_line_points(mi: MeshInstance3D, points: PackedVector3Array) -> void:
@@ -352,7 +355,16 @@ func create_entity(item: Dictionary, p: Vector3, rot: float, variant: int, from_
 	items.append(data)
 	_rebuild_aabbs()
 	emit_signal("furniture_changed")
+	# symbolic building: notify the land owner if this is an emblem
+	if item.has("emblem"):
+		emit_signal("emblem_placed", p, str(item["emblem"]), _local_player_name())
 	return data
+
+func _local_player_name() -> String:
+	var pl: Node = get_tree().get_first_node_in_group("player")
+	if pl != null and pl.has_method("get_player_name"):
+		return str(pl.get_player_name())
+	return "local"
 
 func _fit_model(root: Node3D, inst: Node3D, target: Vector3) -> void:
 	var a := _world_aabb(inst)

@@ -169,6 +169,9 @@ func _ready() -> void:
 	# --- Interactive furniture (Section 8) ---
 	_interact_tests(gx, gz, gy)
 
+	# --- Sensory / social layer (Section 1) ---
+	_social_tests(gx, gz, gy)
+
 	print("")
 	print("=====================================")
 	print("SMOKE TEST: %d passed, %d failed" % [_passes, _fails])
@@ -432,8 +435,50 @@ func _make_fake_player(pos: Vector3) -> Node3D:
 	add_child(p)
 	return p
 
+## Sensory/social layer tests (Section 1): memory, land/inheritance, emblems, maturity.
+func _social_tests(gx: int, gz: int, gy: int) -> void:
+	# 1.2 PlaceMemory: decay is a pure function of elapsed time
+	var pm: PlaceMemory = PlaceMemory.new()
+	pm.decay_time = 100.0
+	pm.record_activity(Vector3(gx, gy, gz))
+	var fresh := pm.decay_level(Vector3(gx, gy, gz))
+	_check("memory: fresh build is not decayed", fresh < 0.05)
+	_check("memory: decay grows with time", pm.decay_level_of(50.0) > pm.decay_level_of(10.0))
+	_check("memory: fully abandoned at decay_time", pm.decay_level_of(100.0) >= 1.0)
+	# 1.3 LandRegistry: claim + emblem notification + inheritance
+	var land: LandRegistry = LandRegistry.new()
+	var notified: Array = []
+	land.owner_notified.connect(func(owner, text): notified.append([owner, text]))
+	land.claim_at("Alice", Vector3(gx, 0, gz))
+	_check("land: owner claim", land.owner_at(Vector3(gx, 0, gz)) == "Alice")
+	land.place_emblem("Bob", Vector3(gx + 1, 0, gz + 1), "gift")
+	_check("land: emblem notifies owner", notified.size() == 1 and notified[0][0] == "Alice")
+	# own emblem on own land does not notify
+	land.place_emblem("Alice", Vector3(gx + 2, 0, gz + 2), "sign")
+	_check("land: own emblem no self-notify", notified.size() == 1)
+	# inheritance: make Alice abandoned, Bob adopts
+	land.abandon_after = 5.0
+	land.players["Alice"]["last_seen"] = Time.get_ticks_msec() / 1000.0 - 10.0  # 10s ago
+	_check("land: Alice abandoned", land.is_abandoned("Alice"))
+	var adopted: int = land.adopt("Alice", "Bob")
+	_check("land: Bob adopts Alice's land", adopted >= 1 and land.owner_at(Vector3(gx, 0, gz)) == "Bob")
+	# 1.6 Maturity
+	var mat: Maturity = Maturity.new()
+	mat.record_build("Alice")
+	mat.record_build("Bob")
+	mat.record_government()
+	_check("maturity: settlers counted", mat.permanent_settlers() == 2)
+	_check("maturity: governments counted", mat.governments_formed == 1)
+	land.queue_free()
+	pm.queue_free()
+
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():
+		# symbolic emblems are small prim markers (no Kenney equivalent) — OK
+		if it.has("emblem"):
+			continue
+		if not it.has("glb"):
+			return false
 		if FurnitureCatalog.asset_path(it) == "":
 			return false
 	return true

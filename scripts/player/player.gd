@@ -17,6 +17,7 @@ var grounded := false
 var health := 100.0
 var hunger := 100.0
 var skin_name := "default"
+var player_name := "Player"
 var _yaw := 0.0
 var _pitch := 0.0
 var _flying := false
@@ -494,6 +495,9 @@ func set_yaw(v: float) -> void:
 
 func give_item(id: int, n: int) -> void:
 	inventory.add_item(id, n)
+
+func get_player_name() -> String:
+	return player_name
 
 func _furniture() -> Node:
 	return get_tree().get_first_node_in_group("furniture_system")

@@ -60,6 +60,17 @@ const ITEMS: Array = [
 	{"id": 16, "name": "Television", "glb": "televisionModern.glb", "size": Vector3(1.0, 1.0, 0.4),
 	 "interact": "watch", "tv": true,
 	 "variants": [Color(1, 1, 1)], "prims": [[0, 1.0, 1.0, 0.4, [0, 0.5, 0]]]},
+	# --- symbolic emblems: building as non-verbal communication (Section 1.4) ---
+	# Small symbolic markers (no Kenney equivalent) — prims are acceptable here.
+	{"id": 17, "name": "Welcome Flag", "size": Vector3(0.4, 3.0, 0.4), "emblem": "welcome_flag",
+	 "no_collider": true,
+	 "variants": [Color(0.85, 0.2, 0.2)], "prims": [[1, 0.1, 3.0, 0.1, [0, 1.5, 0]], [0, 1.2, 0.8, 0.05, [0.65, 2.4, 0]]]},
+	{"id": 18, "name": "Gift", "size": Vector3(0.6, 0.6, 0.6), "emblem": "gift",
+	 "no_collider": true,
+	 "variants": [Color(0.9, 0.3, 0.5)], "prims": [[0, 0.6, 0.6, 0.6, [0, 0.3, 0]]]},
+	{"id": 19, "name": "Sign", "size": Vector3(0.8, 1.4, 0.15), "emblem": "sign",
+	 "no_collider": true,
+	 "variants": [Color(0.6, 0.45, 0.25)], "prims": [[1, 0.08, 1.2, 0.08, [0, 0.6, 0]], [0, 0.8, 0.5, 0.1, [0, 1.1, 0]]]},
 ]
 
 ## prims entry: [shape, size.x, size.y, size.z, offset] — shape: 0 box, 1 cylinder, 2 sphere

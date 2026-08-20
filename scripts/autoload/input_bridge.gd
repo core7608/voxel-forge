@@ -30,6 +30,11 @@ const _BOOTSTRAP := [
 	preload("res://scripts/systems/character_model.gd"),
 	preload("res://scripts/systems/furniture_catalog.gd"),
 	preload("res://scripts/systems/skin_manager.gd"),
+	preload("res://scripts/systems/place_memory.gd"),
+	preload("res://scripts/systems/land_registry.gd"),
+	preload("res://scripts/systems/maturity.gd"),
+	preload("res://scripts/systems/furniture_system.gd"),
+	preload("res://scripts/voxel/structure_generator.gd"),
 ]
 
 var _bootstrap_ref: Array = []  # keeps the preloads referenced
