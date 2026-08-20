@@ -28,10 +28,10 @@ scripts   = PackedStringArray("scripts/hook.gd")
 
 ## إضافة بلوك
 
-أنشئ `BlockMaterial` بـ `id` فريد (المواد الأساسية: 1-14, مود Marble: 15 — خد رقم جديد):
+أنشئ `BlockMaterial` بـ `id` فريد (المواد الأساسية: 1-22, مود Marble المثال: 30 — خد رقم جديد):
 
 ```
-id = 20
+id = 40
 name = "Obsidian"
 color = Color(0.15, 0.1, 0.2)
 weight = 3.0
@@ -47,8 +47,8 @@ drop = -2            # -2 = نفسه
 
 ```
 name = "Obsidian Brick"
-inputs = { 20: 2, 3: 1 }
-output = 21
+inputs = { 40: 2, 3: 1 }
+output = 41
 output_count = 1
 ```
 

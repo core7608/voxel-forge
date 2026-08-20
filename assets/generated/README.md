@@ -2,7 +2,10 @@
 
 - `blocks_atlas.png` — 64×64 (4×4 خلايا 16px) — ترتيب الخلايا = `atlas_cell` في `BlockMaterial`:
   0 grass, 1 dirt, 2 stone, 3 bedrock, 4 sand, 5 log, 6 leaves, 7 iron_ore, 8 planks,
-  9 treated_wood, 10 brick, 11 reinforced, 12 steel_column, 13 foundation, 14 marble (مود), 15 spare.
+  9 treated_wood, 10 brick, 11 reinforced, 12 steel_column, 13 foundation.
+  The eight new model-backed blocks use no generated atlas cell; their real
+  3D model name is shown in the HUD instead. Marble (the example mod) also
+  uses a separate model and has no generated icon.
 - `icons.png` — أيقونات الـ Hotbar (نفس الترتيب + apple=16, meat=17).
 - `default_skin.png` — اسكن افتراضي 192×128 (3×2 مناطق 64px: رأس/جذع/ذراعR / ذراعL/رجلR/رجلL).
 

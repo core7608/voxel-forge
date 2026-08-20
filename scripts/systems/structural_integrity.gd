@@ -16,7 +16,7 @@ extends Node3D
 ##
 ## [C#-CANDIDATE] The whole class is the #1 port target (flood-fill/graph on
 ## a large world). Node API stays identical; GDScript version keeps the
-## prototype fast enough for a 96x96 island.
+## prototype fast enough for the expanded 128x128 island.
 
 const OK := 0
 const WARN := 1

@@ -13,12 +13,19 @@ extends Node3D
 
 enum State { IDLE, PATROL, CHASE, ATTACK, FLEE, INVESTIGATE }
 
-const MODEL_PATH := "res://assets/kenney/mini-dungeon/models/character-orc.glb"
+const DEFAULT_MODEL_PATH := "res://assets/kenney/mini-dungeon/models/character-orc.glb"
 
+## Set by Main before the node enters the scene tree. Every profile points to
+## a bundled, ready-made Kenney .glb; no character geometry is generated here.
+var model_path := DEFAULT_MODEL_PATH
+var mob_name := "Orc"
+var loot_id := Blocks.MEAT
 var difficulty: AIDifficulty = AIDifficulty.medium()
 var health := 24.0
 var max_health := 24.0
 var active := false
+var _profile_health := 24.0
+var _name_label: Label3D = null
 
 var state: int = State.IDLE
 var target_pos: Vector3 = Vector3.ZERO
@@ -51,6 +58,13 @@ func _ready() -> void:
 	rng.randomize()
 	add_to_group("monster")
 	_build_body()
+	_name_label = Label3D.new()
+	_name_label.text = mob_name
+	_name_label.pixel_size = 0.007
+	_name_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	_name_label.position = Vector3(0, 1.65, 0)
+	_name_label.modulate = Color(1.0, 0.75, 0.55)
+	add_child(_name_label)
 	var sb := StaticBody3D.new()
 	sb.collision_layer = 8
 	sb.collision_mask = 0
@@ -66,16 +80,27 @@ func _ready() -> void:
 		if o != self and o.has_signal("player_spotted"):
 			o.player_spotted.connect(_on_allies_spotted)
 
+func configure(profile: Dictionary) -> void:
+	## Configure a catalog entry before add_child(). The mesh is still loaded by
+	## CharacterModel from the ready-made asset path in the profile.
+	model_path = str(profile.get("model", DEFAULT_MODEL_PATH))
+	mob_name = str(profile.get("name", "Mob"))
+	loot_id = int(profile.get("loot", Blocks.MEAT))
+	_profile_health = float(profile.get("health", 24.0))
+	health = _profile_health
+	max_health = _profile_health
+
 func set_difficulty(d: AIDifficulty) -> void:
 	difficulty = d
+	var multiplier := 1.0
 	match d.name:
-		"Easy": max_health = 20.0
-		"Hard": max_health = 30.0
-		_: max_health = 24.0
+		"Easy": multiplier = 0.85
+		"Hard": multiplier = 1.15
+	max_health = _profile_health * multiplier
 	health = max_health
 
 func _build_body() -> void:
-	_body = CharacterModel.build(self, MODEL_PATH, 1.25, "Body")
+	_body = CharacterModel.build(self, model_path, 1.25, "Body")
 	for mi in _body.find_children("*", "MeshInstance3D", true, false):
 		_meshes.append(mi)
 
@@ -359,7 +384,7 @@ func die() -> void:
 			var pickup_script := load("res://scripts/fx/pickup.gd")
 			var pk: Node3D = pickup_script.new()
 			pk.global_position = global_position + Vector3(0, 0.5, 0)
-			pk.item_id = Blocks.MEAT
+			pk.item_id = loot_id
 			pk.count = 1
 			fx.add_child(pk)
 	Sfx.play("break")

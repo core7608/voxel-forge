@@ -24,8 +24,10 @@ models the game uses.
 | | `wall-narrow` | Reinforced block (tinted) |
 | | `column` | Steel Column block |
 | | `floor` | Foundation block |
-| | `character-human` | Villager NPC "Karim" |
-| | `character-orc` | Night monster |
+| | `stones`, `rocks`, `stairs` | Cobblestone, Rock Pile, and Dungeon Stairs blocks |
+| | `wall-half`, `wall-opening`, `floor-detail` | Half Wall, Wall Opening, and Floor Detail blocks |
+| | `character-human` | Villager NPC "Karim" and Dungeon Guard mob |
+| | `character-orc` | Orc night mob |
 | | `weapon-sword` | Sword (in-hand + craftable) |
 | | `weapon-spear` | Spear (in-hand + craftable) |
 | | `shield-round` | Shield (in-hand + craftable) |
@@ -36,8 +38,10 @@ models the game uses.
 | | `platform_beach` | Sand block |
 | | `tree_blocks` | Leaves block |
 | | `rock_smallA` | Iron Ore block (tinted) |
+| | `grass`, `rock_largeA` | Grass Tuft and Boulder blocks |
 | **Furniture Kit** (`assets/kenney/furniture-kit/`) | `chair`, `loungeChair`, `loungeSofa`, `tableCoffee`, `table`, `desk`, `bedSingle`, `bookcaseOpen`, `cabinetBed`, `lampSquareFloor`, `rugSquare`, `pottedPlant` | Furniture (Design Mode) |
 | **Mini Characters** (`assets/kenney/mini-characters/`) | `character-male-a` | Player character |
+| | `character-male-b`, `character-female-a` | Raider and Scout night mobs |
 
 **Block → model mapping** lives in `tools/gen_tres.py` (regenerates
 `assets/materials/*.tres`, each embedding a `BlockData` that points at the

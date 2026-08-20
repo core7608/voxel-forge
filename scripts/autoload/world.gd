@@ -2,17 +2,17 @@ class_name VoxelWorld
 extends Node3D
 ## World — chunk-based voxel world (autoload; type name VoxelWorld).
 ##
-## Fixed-size prototype island: 6x6 chunks of 16x32x16 (96x96 columns).
+## Fixed-size island: 8x8 chunks of 16x40x16 (128x128 columns).
 ## Terrain is deterministic from the seed; only player edits ("placed" /
-## "broken") are saved, so worlds stay small on disk.
+## "broken") are saved, so worlds stay small on disk even as the island grows.
 ##
 ## [C#-CANDIDATE] chunk mesh rebuilds + bulk terrain fill are the main CPU
 ## hot spots; port to C# (see addons_native plan) if profiling demands it.
 
 const CH := 16          # chunk side (x/z)
-const H := 32           # world height
-const CHUNKS_X := 6
-const CHUNKS_Z := 6
+const H := 40           # world height
+const CHUNKS_X := 8
+const CHUNKS_Z := 8
 
 signal block_changed(pos: Vector3i, mat: int)
 signal world_generated

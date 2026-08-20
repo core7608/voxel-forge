@@ -18,13 +18,14 @@
 | النظام | الحالة |
 |---|---|
 | **كل الأصول 3D موديلات Kenney حقيقية مستوردة** (بلوكات/شخصيات/أسلحة/أثاث) — مفيش placeholder | ✅ |
-| عالم Voxel إجرائي (FastNoiseLite: تضاريس، رمال، خام حديد، أشجار) | ✅ |
+| عالم Voxel إجرائي موسّع 128×128×40 (FastNoiseLite: تضاريس، رمال، خام حديد، أشجار) | ✅ |
 | تكسير/وضع بلوكات (Raycast DDA + Grid) — كل بلوك **موديل Kenney حقيقي** مبني على الشبكة 1×1×1 | ✅ |
+| 8 بلوكات بناء إضافية (Cobblestone، Rock Pile، Stairs، Walls، Boulder...) من موديلات Kenney الجاهزة | ✅ |
 | **الفيزياء الإنشائية**: Support + Span + Load + Grace Period + انهيار حطام | ✅ |
 | **Ghost Preview** بألوان (أخضر/أصفر/أحمر) + **Structural Info Mode** (V) | ✅ |
 | Inventory + Hotbar + Crafting (خشب→ألواح→مُعالج، حجر→طوب/خرسانة مسلحة/أعمدة، **أسلحة**) | ✅ |
 | Creative / Survival (صحة، جوع، ليل/نهار، وحوش ليلية) | ✅ |
-| **شخصيات Kenney حقيقية**: لاعب (Mini Characters) + NPC (character-human) + وحش (character-orc) | ✅ |
+| **شخصيات Kenney حقيقية**: لاعب (Mini Characters) + NPC (character-human) + 4 أنواع موبات ليلية (Orc/Raider/Scout/Dungeon Guard) | ✅ |
 | **أسلحة Kenney** (Sword/Spear/Shield) — موديل حقيقي في اليد + ضرر مختلف + Crafting | ✅ |
 | أثاث Kenney غير-Voxel: وضع حر + دوران + Snap + **Design Mode** (قياس بالمتر، تبديل ألوان، حفظ/تحميل `.tres`) | ✅ |
 | NPCs (Karim) بطلبات بناء حقيقية تدفع عملة | ✅ |
@@ -95,8 +96,8 @@ godot --headless --server                           # Dedicated Server (منفذ
 
 كل عنصر 3D في اللعبة (بلوكات، شخصيات، أسلحة، أثاث) هو **موديل `.glb` حقيقي مستورد من حزم Kenney** (CC0)، مضمّن في الريبو ومربوط بالكود:
 
-- **بلوكات**: كل `BlockMaterial` فيه `BlockData` بيشاور على `.glb` (في `assets/materials/*.tres`). الموديل بيتحمّل مرة، بيتدمج، ويتسكّل على خلية الشبكة 1×1×1 (`block_model_baker.gd`) وبيتوضع في الـ chunk mesh. التوثيق الكامل: [docs/ASSET_CREDITS.md](docs/ASSET_CREDITS.md).
-- **الشخصيات**: اللاعب (Mini Characters `character-male-a`)، الـ NPC (`character-human`)، والوحش الليلي (`character-orc` من Mini Dungeon) — كلها موديلات Kenney حقيقية.
+- **بلوكات**: كل `BlockMaterial` فيه `BlockData` بيشاور على `.glb` (في `assets/materials/*.tres`). الموديل بيتحمّل مرة، بيتدمج، ويتسكّل على خلية الشبكة 1×1×1 (`block_model_baker.gd`) وبيتوضع في الـ chunk mesh. البلوكات الإضافية تستخدم `stones`, `rocks`, `stairs`, `wall-half`, `wall-opening`, `floor-detail`, و`rock_largeA` — كلها ملفات Kenney جاهزة، مش موديلات مولّدة بالكود. التوثيق الكامل: [docs/ASSET_CREDITS.md](docs/ASSET_CREDITS.md).
+- **الشخصيات**: اللاعب (Mini Characters `character-male-a`)، الـ NPC (`character-human`)، وأربعة موبات ليلية: Orc وRaider وScout وDungeon Guard — كلها موديلات Kenney حقيقية جاهزة من Mini Dungeon وMini Characters.
 - **الأسلحة**: Sword/Spear/Shield من Mini Dungeon — بتظهر كموديل حقيقي في يد اللاعب.
 - **الأثاث**: 12 قطعة من Furniture Kit + 2 (Barrel/Chest) من Mini Dungeon — كلها `.glb` حقيقية.
 - **Kenney Packs المضمّنة**: `Mini Dungeon` + `Nature Kit` + `Furniture Kit` + `Mini Characters` (مقصوصة لموديلات الاستخدام فقط، ~5MB).

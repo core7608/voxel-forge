@@ -4,9 +4,9 @@
 
 [resource]
 script = ExtResource("1_s")
-name = "Marble (mod)"
+name = "Wall Opening"
 inputs = {
-3: 2
+11: 3
 }
-output = 30
+output = 20
 output_count = 1

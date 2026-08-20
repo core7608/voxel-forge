@@ -23,10 +23,12 @@ var _started := false
 var _dedicated := false
 var _beasts: Array = []
 var _spawn_t := 0.0
+var _mob_spawn_index := 0
 
 const _HUD := preload("res://scripts/ui/hud.gd")
 const _MENU := preload("res://scripts/ui/main_menu.gd")
 const _PLAYER_SCENE := preload("res://scenes/player.tscn")
+const _MOB_CATALOG := preload("res://scripts/npc/mob_catalog.gd")
 
 func _ready() -> void:
 	add_to_group("main_scene")
@@ -285,7 +287,9 @@ func _process(dt: float) -> void:
 			place_memory.apply_effects(Vector3(int(r.x) * 16 + 8, 0, int(r.y) * 16 + 8))
 	if Game.mode == Game.Mode.SURVIVAL and day_night.is_night():
 		_spawn_t += dt
-		if _spawn_t > 8.0 and _beasts.size() < 3:
+		# A larger world gets a larger, varied night roster. Profiles rotate
+		# through bundled Kenney models (Orc, Raider, Scout, Dungeon Guard).
+		if _spawn_t > 6.0 and _beasts.size() < 5:
 			_spawn_t = 0.0
 			_spawn_beast()
 	elif not day_night.is_night():
@@ -303,13 +307,17 @@ func _spawn_beast() -> void:
 	var gy := World.top_ground_y(xi, zi)
 	if gy < 2 or gy > World.H - 3:
 		return
+	var profile: Dictionary = _MOB_CATALOG.profile(_mob_spawn_index)
+	_mob_spawn_index += 1
 	var mon: Node3D = load("res://scripts/npc/monster.gd").new()
+	mon.configure(profile)
 	mon.global_position = Vector3(xi + 0.5, gy + 1.05, zi + 0.5)
 	add_child(mon)
 	mon.set_difficulty(_ai_difficulty())
 	mon.structural = structural
 	mon.active = true
 	_beasts.append(mon)
+	Game.toast("Night mob: %s" % str(profile["name"]))
 
 ## Difficulty preset from the owner's setting (Section 7).
 func _ai_difficulty() -> AIDifficulty:
@@ -323,6 +331,8 @@ func _kill_beasts() -> void:
 		if is_instance_valid(b):
 			b.queue_free()
 	_beasts.clear()
+	_spawn_t = 0.0
+	_mob_spawn_index = 0
 
 # --- sensory / social layer (Section 1) ------------------------------------
 
