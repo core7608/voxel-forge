@@ -89,9 +89,11 @@ func _build_scene() -> void:
 	add_child(place_memory)
 	land = load("res://scripts/systems/land_registry.gd").new()
 	land.name = "Land"
+	land.add_to_group("land_registry")
 	add_child(land)
 	maturity = load("res://scripts/systems/maturity.gd").new()
 	maturity.name = "Maturity"
+	maturity.add_to_group("maturity_system")
 	add_child(maturity)
 	# build activity -> memory + land claim + maturity
 	Game.block_placed.connect(_on_block_placed_social)
@@ -324,8 +326,9 @@ func _kill_beasts() -> void:
 
 # --- sensory / social layer (Section 1) ------------------------------------
 
-func _on_block_placed_social(pos: Vector3i, _mat: int, _by_peer: int) -> void:
-	var pl_name := _local_player_name()
+func _on_block_placed_social(pos: Vector3i, _mat: int, by_peer: int) -> void:
+	# by_peer > 0: the host applied a remote player's request — credit them.
+	var pl_name := _local_player_name() if by_peer == 0 else "peer_%d" % by_peer
 	place_memory.record_activity(Vector3(pos))
 	land.claim_at(pl_name, Vector3(pos))
 	maturity.record_build(pl_name)

@@ -23,6 +23,9 @@ var placed: Dictionary = {}      # Vector3i -> material id (player blocks only)
 var broken: Array = []           # [[x, y, z, original_terrain_mat], ...]
 var generated := false
 var test_small := false          # smoke-test flag: 2x2 chunks
+## True while applying a bulk diff (save load / join world sync): those edits
+## are history, not fresh player actions (no new land claims / maturity).
+var applying_bulk := false
 var WX: int = CHUNKS_X * CH
 var WZ: int = CHUNKS_Z * CH
 
@@ -263,13 +266,17 @@ func get_placed_list() -> Array:
 	return out
 
 func apply_placed(list: Array) -> void:
+	applying_bulk = true
 	for e in list:
 		set_block(Vector3i(int(e[0]), int(e[1]), int(e[2])), int(e[3]))
+	applying_bulk = false
 
 func apply_broken(list: Array) -> void:
+	applying_bulk = true
 	for e in list:
 		var p := Vector3i(int(e[0]), int(e[1]), int(e[2]))
 		# Only clear cells the player did NOT rebuild (apply_placed ran first,
 		# so any rebuilt cell is present in `placed`).
 		if not placed.has(p):
 			set_block(p, 0)
+	applying_bulk = false

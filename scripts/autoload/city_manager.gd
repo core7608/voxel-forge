@@ -220,6 +220,74 @@ func _find_castle_in(bounds: AABB) -> int:
 			best = s
 	return best if best_overlap > 20 else -1
 
+# --- persistence -----------------------------------------------------------------
+
+## Serialize all cities (colours become html strings, Vector3 -> array).
+func get_data() -> Dictionary:
+	var out: Array = []
+	for idx in cities:
+		var c: City = cities[idx]
+		var colors_out: Array = []
+		for col in c.flag_colors:
+			colors_out.append((col as Color).to_html())
+		out.append({
+			"idx": idx,
+			"name": c.name,
+			"founder": c.founder,
+			"center": [c.center.x, c.center.y, c.center.z],
+			"flag_colors": colors_out,
+			"flag_symbol": c.flag_symbol,
+			"theme": c.theme,
+			"government": c.government,
+			"council": c.council.duplicate(),
+			"residents": c.residents.duplicate(),
+			"roles": c.roles.duplicate(),
+			"treasury": c.treasury,
+			"tax_rate": c.tax_rate,
+			"max_building_height": c.max_building_height,
+			"open_city": c.open_city,
+			"castle_index": c.castle_index,
+		})
+	return {"cities": out}
+
+func load_data(data: Dictionary) -> void:
+	# wipe existing
+	for idx in cities.keys():
+		var pole: Node3D = _flagpoles.get(idx, null)
+		if pole != null and is_instance_valid(pole):
+			pole.queue_free()
+	cities.clear()
+	_flagpoles.clear()
+	_votes.clear()
+	_next_city = 1
+	_next_vote = 1
+	for e in data.get("cities", []):
+		var c := City.new()
+		c.name = str(e.get("name", "New Town"))
+		c.founder = str(e.get("founder", ""))
+		var ctr: Array = e.get("center", [0, 0, 0])
+		c.center = Vector3(float(ctr[0]), float(ctr[1]), float(ctr[2]))
+		var colors: Array = []
+		for ch in e.get("flag_colors", []):
+			colors.append(Color(str(ch)))
+		c.flag_colors = colors if not colors.is_empty() else [Color(0.8, 0.2, 0.2), Color(0.9, 0.9, 0.9)]
+		c.flag_symbol = str(e.get("flag_symbol", "star"))
+		c.theme = str(e.get("theme", "mixed"))
+		c.government = str(e.get("government", "monarchy"))
+		c.council = Array(e.get("council", []))
+		c.residents = Array(e.get("residents", []))
+		c.roles = e.get("roles", {}).duplicate()
+		c.treasury = int(e.get("treasury", 0))
+		c.tax_rate = float(e.get("tax_rate", 0.1))
+		c.max_building_height = int(e.get("max_building_height", 20))
+		c.open_city = bool(e.get("open_city", true))
+		c.castle_index = int(e.get("castle_index", -1))
+		var idx := int(e.get("idx", _next_city))
+		cities[idx] = c
+		_next_city = maxi(_next_city, idx + 1)
+		_spawn_flagpole(idx)
+		emit_signal("city_created", idx)
+
 # --- flag pole visual --------------------------------------------------------
 
 func _spawn_flagpole(index: int) -> void:
@@ -293,7 +361,7 @@ func _flag_texture(city: City) -> Texture2D:
 	match str(city.flag_symbol):
 		"star":
 			for a in range(8):
-				var ang := a * PI / 4.0
+				var ang: float = float(a) * PI / 4.0
 				for r in range(2, 10):
 					var px := int(cx + cos(ang) * r)
 					var py := int(cy + sin(ang) * r * 0.7)

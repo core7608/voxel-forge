@@ -283,7 +283,7 @@ func _aabb_of(root: Node) -> AABB:
 func _hover() -> Dictionary:
 	var cam := $Camera3D as Camera3D
 	var from := cam.global_position
-	var dir := -cam.global_transform.basis.z
+	var dir: Vector3 = -cam.global_transform.basis.z
 	var best: Dictionary = {"type": "none"}
 	var br := VoxelRay.cast(World, from, dir, 7.0)
 	if br.hit != null:

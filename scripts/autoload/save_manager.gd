@@ -5,10 +5,14 @@ extends Node
 ## placed blocks, broken terrain cells, furniture, player state.
 ## Extensible: bump "version" and migrate on load when the format grows.
 
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 func _dir(seed_value: int) -> String:
 	return "user://saves/%d/" % seed_value
+
+## Fetch an optional node (systems created by Main) via group.
+func _sys(group: String) -> Node:
+	return get_tree().get_first_node_in_group(group)
 
 func has_save(seed_value: int) -> bool:
 	return FileAccess.file_exists(_dir(seed_value) + "save.json")
@@ -18,6 +22,8 @@ func save_game() -> bool:
 	DirAccess.make_dir_recursive_absolute(d)
 	var pl: Node = get_tree().get_first_node_in_group("player")
 	var furn: Node = get_tree().get_first_node_in_group("furniture_system")
+	var land: Node = _sys("land_registry")
+	var mat_sys: Node = _sys("maturity_system")
 	var data := {
 		"version": SAVE_VERSION,
 		"seed": World.seed,
@@ -28,6 +34,10 @@ func save_game() -> bool:
 		"broken": World.get_broken_list(),
 		"furniture": furn.get_data() if furn != null else [],
 		"player": {},
+		# v2: social/sensory layer + cities persist across sessions
+		"land": land.get_data() if land != null else {},
+		"maturity": mat_sys.get_data() if mat_sys != null else {},
+		"cities": CityManager.get_data(),
 	}
 	if pl != null:
 		data["player"] = {
@@ -73,4 +83,13 @@ func load_game() -> bool:
 	var furn: Node = get_tree().get_first_node_in_group("furniture_system")
 	if furn != null and data.has("furniture"):
 		furn.load_data(data["furniture"])
+	# v2: social/sensory layer + cities (absent in v1 saves -> harmless skip)
+	var land: Node = _sys("land_registry")
+	if land != null and data.has("land"):
+		land.load_data(data["land"])
+	var mat_sys: Node = _sys("maturity_system")
+	if mat_sys != null and data.has("maturity"):
+		mat_sys.load_data(data["maturity"])
+	if data.has("cities"):
+		CityManager.load_data(data["cities"])
 	return true

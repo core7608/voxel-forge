@@ -39,11 +39,18 @@ func _connect_world() -> void:
 		World.block_changed.connect(_on_block_changed)
 
 func _on_block_changed(pos: Vector3i, mat: int) -> void:
-	var peer_id: int = 0
-	if Net != null and not Net.is_hosting():
-		peer_id = 0  # clients never apply directly; host is the source of truth
+	# Remote-authoritative applies (client receiving host broadcasts) and bulk
+	# diff replays (save load / join sync) are NOT fresh player actions — skip
+	# re-emitting so land claims / maturity stay attributed to real building.
+	if World != null and World.applying_bulk:
+		return
+	var actor := 0
+	if Net != null:
+		if Net.applying_remote:
+			return
+		actor = Net.remote_actor_id  # host applying a client's request
 	if mat != 0:
-		emit_signal("block_placed", pos, mat, peer_id)
+		emit_signal("block_placed", pos, mat, actor)
 	else:
 		emit_signal("block_broken", pos, 0)
 

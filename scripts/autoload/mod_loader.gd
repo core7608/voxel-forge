@@ -15,8 +15,9 @@ func _ready() -> void:
 	for base in ["res://mods", "user://mods"]:
 		if not DirAccess.dir_exists_absolute(base):
 			continue
-		var entries: Array = DirAccess.get_files_at(base)
-		entries.append_array(DirAccess.get_directories_at(base))
+		# get_files_at/get_directories_at return PackedStringArray: convert.
+		var entries: Array = Array(DirAccess.get_files_at(base))
+		entries.append_array(Array(DirAccess.get_directories_at(base)))
 		for entry in entries:
 			var path: String = base.path_join(entry)
 			if not DirAccess.dir_exists_absolute(path):
@@ -48,9 +49,9 @@ func _load_mod(path: String, mf_path: String) -> void:
 		var script: Script = load(path.path_join(rel))
 		if script == null:
 			continue
-		var inst = script.new()
+		var inst: Object = script.new()
 		if inst is Node:
-			add_child(inst)
+			add_child(inst as Node)
 		info["scripts"] += 1
 	loaded.append(info)
 	Game.toast("Mod loaded: %s v%s" % [mf.name, mf.version])
