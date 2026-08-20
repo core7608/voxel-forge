@@ -153,28 +153,36 @@ static func _build_dungeon(world: VoxelWorld, cx: int, surface_y: int, cz: int, 
 	var floor_y := surface_y - 4
 	if floor_y < 2:
 		return
-	var stone := Blocks.by_name("stone")
-	var brick := Blocks.by_name("brick")
+	var cobble := Blocks.by_name("cobblestone")
+	var stairs := Blocks.by_name("dungeon_stairs")
+	var opening := Blocks.by_name("wall_opening")
+	var detail := Blocks.by_name("floor_detail")
 	var ore := Blocks.by_name("iron_ore")
 	var reinf := Blocks.by_name("reinforced")
 	# three rooms in a line, each 5x5x4, connected by 1-wide corridors
+
 	var room_z := cz - 4
 	var rooms_x := [cx - 7, cx + 1, cx + 9]
 	for i in 3:
 		var rx: int = rooms_x[i]
-		# room floor (brick), walls implied by surrounding stone (leave as is)
-		_fill_box(world, sidx, rx, floor_y, room_z, 5, 1, 5, brick)
+		# room floor (ready-made Kenney cobblestone model), walls implied by
+		# surrounding stone (leave as is)
+		_fill_box(world, sidx, rx, floor_y, room_z, 5, 1, 5, cobble)
 		# hollow interior above the floor
 		_carve_room(world, sidx, rx + 1, floor_y + 1, room_z + 1, 3, 3, 3)
+		_put(world, sidx, rx + 2, floor_y + 1, room_z + 2, detail)
 		# corridors between rooms (at floor_y+1 height)
 		if i < 2:
 			var nx: int = rooms_x[i + 1]
 			for x in range(rx + 5, nx):
 				_put(world, sidx, x, floor_y + 1, cz, 0)  # carve corridor
-				_put(world, sidx, x, floor_y, cz, brick)   # corridor floor
-	# entrance shaft from surface to first room
+				_put(world, sidx, x, floor_y, cz, cobble)   # corridor floor
+			_put(world, sidx, nx - 1, floor_y + 1, cz, opening) # ready-made doorway
+	# entrance shaft from surface to first room, with a ready-made stair run
 	for y in range(floor_y, surface_y):
 		_put(world, sidx, cx - 7 + 2, y, cz, 0)
+	for i in range(3):
+		_put(world, sidx, cx - 5, floor_y + 1 + i, cz, stairs)
 	# pit trap in the first corridor
 	_put(world, sidx, rooms_x[0] + 5, floor_y, cz, 0)
 	# loot + boss room (last room): ore + reinforced

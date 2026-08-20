@@ -33,6 +33,15 @@ BLOCKS = [
     (12, "Reinforced",     MD + "wall-narrow.glb",    (0.78, 0.84, 0.92)),
     (13, "Steel Column",   MD + "column.glb",         None),
     (14, "Foundation",     MD + "floor.glb",          None),
+    # Additional build pieces — all point to bundled, ready-made Kenney GLBs.
+    (15, "Cobblestone",    MD + "stones.glb",         None),
+    (16, "Rock Pile",       MD + "rocks.glb",           None),
+    (17, "Grass Tuft",      NK + "grass.glb",           None),
+    (18, "Dungeon Stairs",  MD + "stairs.glb",          None),
+    (19, "Half Wall",       MD + "wall-half.glb",       None),
+    (20, "Wall Opening",    MD + "wall-opening.glb",    None),
+    (21, "Floor Detail",    MD + "floor-detail.glb",    None),
+    (22, "Boulder",         NK + "rock_largeA.glb",     None),
 ]
 
 # physical/structural defaults per id: (weight, support, span, break_time, drop, drop_chance, is_terrain, unbreakable, foundation)
@@ -51,6 +60,14 @@ PHYS = {
     12: (2.5, 160.0, 5, 2.2, -2, 1.0, False, False, False),
     13: (2.0, 400.0, 1, 2.0, -2, 1.0, False, False, False),
     14: (3.0, 500.0, 1, 1.5, -2, 1.0, False, False, True),
+    15: (2.0, 100.0, 1, 1.3, -2, 1.0, False, False, False),
+    16: (2.5, 110.0, 1, 1.8, -2, 1.0, False, False, False),
+    17: (0.2, 10.0, 0, 0.25, 101, 0.2, False, False, False),
+    18: (1.8, 80.0, 1, 1.2, -2, 1.0, False, False, False),
+    19: (1.4, 90.0, 1, 1.2, -2, 1.0, False, False, False),
+    20: (1.6, 90.0, 1, 1.4, -2, 1.0, False, False, False),
+    21: (1.0, 60.0, 0, 0.8, -2, 1.0, False, False, False),
+    22: (3.0, 130.0, 0, 2.2, -2, 1.0, False, False, False),
 }
 
 # base albedo colours (used for the icon + cube fallback)
@@ -59,7 +76,11 @@ COLORS = {
     4: (0.24, 0.24, 0.27), 5: (0.85, 0.78, 0.55), 6: (0.45, 0.32, 0.18),
     7: (0.30, 0.52, 0.25), 8: (0.55, 0.55, 0.58), 9: (0.72, 0.55, 0.34),
     10: (0.55, 0.42, 0.26), 11: (0.62, 0.33, 0.28), 12: (0.62, 0.62, 0.65),
-    13: (0.45, 0.52, 0.62), 14: (0.35, 0.36, 0.40), 15: (0.9, 0.9, 0.93),
+    13: (0.45, 0.52, 0.62), 14: (0.35, 0.36, 0.40),
+    15: (0.42, 0.44, 0.48), 16: (0.36, 0.37, 0.41),
+    17: (0.30, 0.58, 0.24), 18: (0.48, 0.37, 0.29),
+    19: (0.55, 0.30, 0.25), 20: (0.56, 0.33, 0.29),
+    21: (0.35, 0.35, 0.39), 22: (0.38, 0.40, 0.44),
 }
 
 # fire/heat trade-offs per id: (flammable, flammability, heat_conductive, cost)
@@ -80,7 +101,14 @@ FIRE = {
     12: (False, 0.0, True, 5),  # Reinforced (rebar: no burn, conducts heat)
     13: (False, 0.0, True, 4),  # Steel Column
     14: (False, 0.0, False, 3), # Foundation
-    15: (False, 0.0, False, 4), # Marble (mod)
+    15: (False, 0.0, False, 2), # Cobblestone
+    16: (False, 0.0, False, 3), # Rock Pile
+    17: (True, 0.9, False, 1),   # Grass Tuft
+    18: (False, 0.0, False, 2), # Dungeon Stairs
+    19: (False, 0.0, False, 2), # Half Wall
+    20: (False, 0.0, False, 3), # Wall Opening
+    21: (False, 0.0, False, 2), # Floor Detail
+    22: (False, 0.0, False, 3), # Boulder
 }
 
 
@@ -106,7 +134,9 @@ def material_tres(i, name, model, tint):
     lines.append("[resource]")
     lines.append('script = ExtResource("1_s")')
     lines.append("id = %d" % i)
-    lines.append("atlas_cell = %d" % (i - 1))
+    # The bundled atlas only contains the original 14 block icons. New blocks
+    # use their real 3D model in-world and are labelled by name in the HUD.
+    lines.append("atlas_cell = %d" % (i - 1 if i <= 14 else -1))
     lines.append('name = "%s"' % name)
     lines.append("color = Color(%.2f, %.2f, %.2f, 1)" % (r, g, b))
     lines.append("weight = %.1f" % w)
@@ -166,8 +196,16 @@ def main():
     recipe_tres("sword", 7, "Sword", {9: 2, 8: 1}, 201, 1)
     recipe_tres("spear", 8, "Spear", {6: 2, 9: 1}, 202, 1)
     recipe_tres("shield", 9, "Shield", {9: 3}, 203, 1)
+    recipe_tres("cobblestone", 10, "Cobblestone", {3: 2}, 15, 2)
+    recipe_tres("rock_pile", 11, "Rock Pile", {3: 3}, 16, 1)
+    recipe_tres("grass_tuft", 12, "Grass Tuft", {1: 1}, 17, 2)
+    recipe_tres("dungeon_stairs", 13, "Dungeon Stairs", {3: 3}, 18, 2)
+    recipe_tres("half_wall", 14, "Half Wall", {11: 2}, 19, 2)
+    recipe_tres("wall_opening", 15, "Wall Opening", {11: 3}, 20, 1)
+    recipe_tres("floor_detail", 16, "Floor Detail", {14: 1}, 21, 2)
+    recipe_tres("boulder", 17, "Boulder", {3: 3}, 22, 1)
 
-    # example mod marble (id 15)
+    # example mod marble (id 30)
     w, sup, span, bt = 2.0, 120.0, 3, 1.6
     content = "\n".join([
         '[gd_resource type="Resource" script_class="BlockMaterial" format=3]',
@@ -185,8 +223,8 @@ def main():
         "",
         "[resource]",
         'script = ExtResource("1_s")',
-        "id = 15",
-        "atlas_cell = 14",
+        "id = 30",
+        "atlas_cell = -1",
         'name = "Marble"',
         "color = Color(0.9, 0.9, 0.93, 1)",
         "weight = %.1f" % w,

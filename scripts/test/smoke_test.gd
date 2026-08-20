@@ -160,6 +160,21 @@ func _ready() -> void:
 	_check("asset: sword model exists", ResourceLoader.exists(Blocks.weapon_model(Blocks.SWORD)))
 	_check("asset: every furniture item has a real model", _all_furniture_have_models())
 
+	# --- expanded ready-made content --------------------------------------------
+	var added_blocks := [
+		"cobblestone", "rock_pile", "grass_tuft", "dungeon_stairs",
+		"half_wall", "wall_opening", "floor_detail", "boulder",
+	]
+	for block_name in added_blocks:
+		var block_id := Blocks.by_name(block_name)
+		var block_mat: BlockMaterial = Blocks.mat(block_id)
+		_check("content: %s is registered" % block_name, block_id >= 15 and block_mat != null)
+		_check("content: %s uses a ready-made model" % block_name, block_mat != null and block_mat.get_model_path() != "" and ResourceLoader.exists(block_mat.get_model_path()))
+	_check("content: every new block model bakes", _all_added_block_models_bake(added_blocks))
+	_check("content: expanded world is 128x128x40", VoxelWorld.CHUNKS_X == 8 and VoxelWorld.CHUNKS_Z == 8 and VoxelWorld.H == 40)
+	_check("content: every mob profile uses a bundled model", MobCatalog.all_models_exist())
+	_check("content: four mob profiles are available", MobCatalog.TYPES.size() >= 4)
+
 	# --- Procedural structures (Section 2) ---
 	_structure_tests(gx, gz, gy)
 
@@ -471,6 +486,13 @@ func _social_tests(gx: int, gz: int, gy: int) -> void:
 	_check("maturity: governments counted", mat.governments_formed == 1)
 	land.queue_free()
 	pm.queue_free()
+
+func _all_added_block_models_bake(names: Array) -> bool:
+	for block_name in names:
+		var mat_id := Blocks.by_name(str(block_name))
+		if BlockModelBaker.get_baked(mat_id).is_empty():
+			return false
+	return true
 
 func _all_furniture_have_models() -> bool:
 	for it in FurnitureCatalog.list():

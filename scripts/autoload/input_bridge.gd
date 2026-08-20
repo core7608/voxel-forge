@@ -13,6 +13,7 @@ extends Node
 
 const _BOOTSTRAP := [
 	preload("res://scripts/resources/block_data.gd"),
+	preload("res://scripts/npc/mob_catalog.gd"),
 	preload("res://scripts/resources/block_material.gd"),
 	preload("res://scripts/resources/ai_difficulty.gd"),
 	preload("res://scripts/resources/craft_recipe.gd"),

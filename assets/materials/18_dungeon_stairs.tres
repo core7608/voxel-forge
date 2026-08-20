@@ -5,21 +5,21 @@
 
 [sub_resource type="Resource" id="Resource_bd"]
 script = ExtResource("2_s")
-display_name = "Marble"
-model_path = "res://assets/kenney/nature-kit/Models/GLTF format/cliff_block_stone.glb"
+display_name = "Dungeon Stairs"
+model_path = "res://assets/kenney/mini-dungeon/models/stairs.glb"
 fit_to_grid = true
 inset = 0.98
-tint = Color(0.92, 0.92, 0.95, 1)
+tint = Color(1, 1, 1, 1)
 
 [resource]
 script = ExtResource("1_s")
-id = 30
+id = 18
 atlas_cell = -1
-name = "Marble"
-color = Color(0.9, 0.9, 0.93, 1)
-weight = 2.0
-support_value = 120.0
-max_span = 3
-break_time = 1.6
-cost = 4
+name = "Dungeon Stairs"
+color = Color(0.48, 0.37, 0.29, 1)
+weight = 1.8
+support_value = 80.0
+max_span = 1
+break_time = 1.2
+cost = 2
 block_data = SubResource("Resource_bd")
